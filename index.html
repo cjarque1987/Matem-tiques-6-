@@ -1,0 +1,489 @@
+<!DOCTYPE html>
+<html lang="ca">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Espai Cuisenaire 6è — Matemàtiques Manipulatives i DUA</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body class="show-rod-ticks">
+
+  <!-- CAPÇALERA PRINCIPAL AMB EINES DUA -->
+  <header class="top-header" role="banner">
+    <div class="header-inner">
+      <div class="brand">
+        <div class="brand-logo" aria-hidden="true">
+          <span style="height: 12px; background: #EF4444;"></span>
+          <span style="height: 18px; background: #84CC16;"></span>
+          <span style="height: 24px; background: #FACC15;"></span>
+          <span style="height: 30px; background: #2563EB;"></span>
+          <span style="height: 36px; background: #F97316;"></span>
+        </div>
+        <div class="brand-title">
+          <h1>Espai Cuisenaire 6è de Primària</h1>
+          <span class="brand-badge">Disseny Universal per a l'Aprenentatge (DUA) · Català</span>
+        </div>
+      </div>
+
+      <div class="header-actions">
+        <button type="button" class="dua-pill-btn" id="btnToggleDuaPanel" aria-expanded="false">
+          ♿ Accessibilitat DUA
+        </button>
+        <button type="button" class="dua-pill-btn" id="btnOpenGlossary">
+          📖 Glossari Visual
+        </button>
+        <button type="button" class="dua-pill-btn" id="btnOpenProgress">
+          🏅 El meu Progrés (<span id="completedCountBadge">0</span> reptes · ⭐ <span id="earnedStarsBadge">0</span>)
+        </button>
+        <button type="button" class="dua-pill-btn" id="btnOpenTeacherModal">
+          👩‍🏫 Espai Docent / Crea Repte
+        </button>
+      </div>
+    </div>
+
+    <!-- PANELL DESPLEGABLE DE PERSONALITZACIÓ DUA (Múltiples mitjans de representació) -->
+    <section class="dua-toolbar-panel" id="duaToolbarPanel" aria-label="Opcions d'accessibilitat DUA">
+      <div class="dua-control-group">
+        <label>Tipografia i Lectura Fàcil</label>
+        <div class="dua-btn-row">
+          <button type="button" class="mini-btn active" id="btnFontStandard">Estàndard</button>
+          <button type="button" class="mini-btn" id="btnFontDyslexia">Lectura Fàcil / Dislèxia</button>
+        </div>
+      </div>
+
+      <div class="dua-control-group">
+        <label>Mida de la lletra</label>
+        <div class="dua-btn-row">
+          <button type="button" class="mini-btn active" data-fontsize="normal">A Normal</button>
+          <button type="button" class="mini-btn" data-fontsize="large">A+ Gran</button>
+          <button type="button" class="mini-btn" data-fontsize="xlarge">A++ Molt Gran</button>
+        </div>
+      </div>
+
+      <div class="dua-control-group">
+        <label>Contrast i Tema Visual</label>
+        <div class="dua-btn-row">
+          <button type="button" class="mini-btn active" data-theme="light">☀️ Clar</button>
+          <button type="button" class="mini-btn" data-theme="dark">🌙 Fosc</button>
+          <button type="button" class="mini-btn" data-theme="contrast">👁️ Alt Contrast</button>
+        </div>
+      </div>
+
+      <div class="dua-control-group">
+        <label>Ajuts Visuals a les Regletes</label>
+        <div class="dua-btn-row">
+          <button type="button" class="mini-btn active" id="btnToggleTicks" title="Mostra les marques de cada unitat dins de la regleta">📏 Marques d'unitat</button>
+          <button type="button" class="mini-btn" id="btnToggleColorblind" title="Afegeix el codi de lletra i etiqueta d'alt contrast per a daltònics">🎨 Mode Daltònics</button>
+          <button type="button" class="mini-btn" id="btnToggleBlindNumbers" title="Amaga el número perquè l'alumne dedueixi el valor per longitud i color">🙈 Regletes Mudes</button>
+        </div>
+      </div>
+    </section>
+  </header>
+
+  <!-- NAVEGACIÓ PRINCIPAL PER MÒDULS -->
+  <nav class="main-nav" aria-label="Mòduls d'aprenentatge">
+    <ul class="nav-tabs" id="moduleTabs">
+      <li>
+        <button type="button" class="nav-tab" data-module="laboratori">
+          🧪 Laboratori Lliure
+        </button>
+      </li>
+      <li>
+        <button type="button" class="nav-tab active" data-module="descomposicio">
+          🧩 1. Descomposició <span class="tab-progress" id="prog-descomposicio">0/9</span>
+        </button>
+      </li>
+      <li>
+        <button type="button" class="nav-tab" data-module="sumes">
+          ➕ 2. Sumes <span class="tab-progress" id="prog-sumes">0/9</span>
+        </button>
+      </li>
+      <li>
+        <button type="button" class="nav-tab" data-module="restes">
+          ➖ 3. Restes <span class="tab-progress" id="prog-restes">0/9</span>
+        </button>
+      </li>
+      <li>
+        <button type="button" class="nav-tab" data-module="multiplicacions">
+          ✖️ 4. Multiplicacions <span class="tab-progress" id="prog-multiplicacions">0/9</span>
+        </button>
+      </li>
+      <li>
+        <button type="button" class="nav-tab" data-module="problemes">
+          📖 5. Problemes <span class="tab-progress" id="prog-problemes">0/9</span>
+        </button>
+      </li>
+    </ul>
+  </nav>
+
+  <!-- CONTENIDOR PRINCIPAL -->
+  <main class="app-container">
+
+    <!-- BARRA DE BASTIMENT DUA (NIVELLS 1, 2, 3) I ESCALA DE VALOR -->
+    <section class="context-bar" aria-label="Nivell de bastiment i escala de les regletes">
+      <div class="level-selector" id="levelSelectorGroup">
+        <span class="level-selector-label">🎯 Nivell DUA:</span>
+        <button type="button" class="level-btn" data-level="all">Tots els nivells</button>
+        <button type="button" class="level-btn active" data-level="1">⭐ Principiant</button>
+        <button type="button" class="level-btn" data-level="2">⭐⭐ Mitjà</button>
+        <button type="button" class="level-btn" data-level="3">⭐⭐⭐ Expert</button>
+      </div>
+
+      <div class="scale-selector">
+        <span class="level-selector-label">📏 Valor de la regleta blanca (1):</span>
+        <button type="button" class="scale-btn" data-scale="0.1">0,1 (Dècimes)</button>
+        <button type="button" class="scale-btn active" data-scale="1">1 (Unitats)</button>
+        <button type="button" class="scale-btn" data-scale="10">10 (Desenes)</button>
+        <button type="button" class="scale-btn" data-scale="100">100 (Centenes)</button>
+      </div>
+    </section>
+
+    <!-- TARGETA DE REPTE O PROBLEMA ACTIU -->
+    <section class="challenge-card" id="challengeCard" aria-live="polite">
+      <div class="challenge-header">
+        <div class="challenge-title-wrap">
+          <span class="challenge-badge" id="challengeBadge">Repte 1 de 3</span>
+          <h2 class="challenge-title" id="challengeTitle">Títol del repte</h2>
+        </div>
+
+        <div class="challenge-nav-group" id="challengeNavGroup">
+          <button type="button" class="tool-btn" id="btnPrevChallenge" title="Repte anterior">⬅️ Anterior</button>
+          <button type="button" class="tool-btn" id="btnNextChallenge" title="Repte següent">Següent ➡️</button>
+        </div>
+      </div>
+
+      <div class="challenge-body">
+        <p class="challenge-instruction" id="challengeInstruction">
+          Instrucció del repte.
+        </p>
+        <div style="display: flex; flex-wrap: wrap; gap: 0.5rem; align-items: center;">
+          <button type="button" class="tts-btn" id="btnSpeakInstruction">
+            🔊 Escolta l'enunciat en català
+          </button>
+          <button type="button" class="tts-btn" id="btnStopSpeak" style="display:none;">
+            ⏹️ Atura la veu
+          </button>
+        </div>
+      </div>
+
+      <!-- Barra addicional específica quan estem al mòdul de Problemes Contextualitzats -->
+      <div class="problem-solver-bar" id="problemSolverBar">
+        <div>
+          <div style="font-size:0.78rem; font-weight:800; text-transform:uppercase; color:var(--text-muted); margin-bottom:0.3rem;">
+            🔍 Dades clau identificades (Suport DUA):
+          </div>
+          <div class="data-pills" id="problemDataPills"></div>
+        </div>
+
+        <div class="answer-input-group">
+          <label for="problemNumericInput" style="font-weight:700;" id="problemQuestionLabel">Resposta numèrica:</label>
+          <input type="text" id="problemNumericInput" class="answer-input" placeholder="Ex: 24" autocomplete="off" />
+          <span id="problemUnitSpan" style="font-weight:800; color:var(--primary);"></span>
+          <button type="button" class="tool-btn" id="btnLoadSuggestedModel" title="Col·loca les regletes del problema al tauler com a ajuda">
+            🪄 Mostra model de regletes
+          </button>
+        </div>
+      </div>
+
+      <!-- Barra de Pistes Graduades DUA (Bastiment pas a pas) -->
+      <div class="scaffolding-bar" id="scaffoldingBar">
+        <div class="hint-buttons">
+          <button type="button" class="hint-btn" data-hint="0">💡 Pista 1 (Comprensió)</button>
+          <button type="button" class="hint-btn" data-hint="1">🧭 Pista 2 (Estratègia amb regletes)</button>
+          <button type="button" class="hint-btn" data-hint="2">🔑 Pista 3 (Pas resolutiu)</button>
+        </div>
+        <div id="constraintSummaryText" style="font-size: 0.85rem; font-weight: 700; color: var(--text-muted);"></div>
+      </div>
+
+      <div class="hint-box" id="hintDisplayBox">
+        <span id="hintTextContent"></span>
+        <button type="button" class="tts-btn" id="btnSpeakHint">🔊 Escolta la pista</button>
+      </div>
+    </section>
+
+    <!-- ESPAI MANIPULATIU: CAIXA DE REGLETES + TAULER INTERACTIU -->
+    <div class="workspace-grid">
+      <!-- Paleta esquerra: Les 10 Regletes de Cuisenaire -->
+      <aside class="rod-palette-card" aria-label="Caixa de regletes de Cuisenaire">
+        <div class="palette-header">
+          <h3>🧰 Caixa de Regletes</h3>
+          <span style="font-size: 0.78rem; color: var(--text-muted); font-weight:600;">Fes clic per afegir</span>
+        </div>
+
+        <div class="target-row-selector" role="group" aria-label="Selecciona a quina fila afegir regletes">
+          <button type="button" class="row-target-btn" id="btnTargetRowA">Fila A (Referència)</button>
+          <button type="button" class="row-target-btn active" id="btnTargetRowB">Fila B (El meu tren)</button>
+        </div>
+
+        <div class="rod-tray" id="rodPaletteTray">
+          <!-- Generat dinàmicament per JS segons l'escala activa -->
+        </div>
+
+        <div style="font-size: 0.78rem; color: var(--text-muted); background: var(--bg-subtle); padding: 0.6rem; border-radius: 8px;">
+          💡 <strong>Consell interactiu:</strong> Fes clic sobre qualsevol regleta ja col·locada al tauler per <strong>eliminar-la</strong>, o activa el <strong>Mode Tisores ✂️</strong> per partir una regleta en dues!
+        </div>
+      </aside>
+
+      <!-- Tauler dret: Catifa quadriculada, Regle, Files A i B i Expressió Simbòlica -->
+      <section class="mat-card" aria-label="Catifa interactiva de treball">
+        <div class="mat-toolbar">
+          <div class="mat-tools-left">
+            <button type="button" class="tool-btn" id="btnSplitMode" title="Quan està actiu, fer clic en una regleta del tauler la divideix en dues parts">
+              ✂️ Mode Tisores (Descompondre peça)
+            </button>
+            <button type="button" class="tool-btn" id="btnSortRowB" title="Ordena les regletes de la Fila B de més gran a més petita">
+              📶 Ordena (Desenes → Unitats)
+            </button>
+            <button type="button" class="tool-btn" id="btnToggleMatrix" title="Visualitza la multiplicació com un rectangle d'àrea">
+              🟦 Vista Matriu / Àrea
+            </button>
+            <button type="button" class="tool-btn" id="btnClearRowB">
+              🗑️ Buida Fila B
+            </button>
+          </div>
+
+          <div class="mat-tools-right">
+            <button type="button" class="tool-btn primary-cta" id="btnVerifyChallenge">
+              ✅ Comprova la resposta
+            </button>
+          </div>
+        </div>
+
+        <!-- Banner de Retroalimentació Formativa -->
+        <div class="feedback-banner" id="feedbackBanner" role="status" aria-live="polite">
+          <div id="feedbackMessage"></div>
+          <button type="button" class="tts-btn" id="btnSpeakFeedback">🔊 Escolta</button>
+        </div>
+
+        <!-- Catifa amb regle i les dues files de comparació -->
+        <div class="mat-scroll-viewport">
+          <div class="mat-canvas" id="matCanvas">
+            <!-- Regle numèric superior -->
+            <div class="number-line-ruler" id="numberLineRuler"></div>
+
+            <!-- FILA A (Referència / Minuend / Model) -->
+            <div class="rod-track-wrapper">
+              <div class="rod-track-header">
+                <span id="labelRowA">📌 Fila A (Model de referència / Total):</span>
+                <span class="track-sum-pill" id="sumPillRowA">0</span>
+              </div>
+              <div class="rod-track" id="trackRowA"></div>
+            </div>
+
+            <!-- FILA B (Construcció de l'alumne) -->
+            <div class="rod-track-wrapper">
+              <div class="rod-track-header">
+                <span id="labelRowB">🛠️ Fila B (La teva construcció amb regletes):</span>
+                <span class="track-sum-pill" id="sumPillRowB">0</span>
+              </div>
+              <div class="rod-track active-target" id="trackRowB"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Vista de Matriu d'Àrea (especial per a Multiplicacions i Propietat Distributiva) -->
+        <div class="area-matrix-box" id="areaMatrixBox">
+          <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:0.5rem;">
+            <strong>🟦 Model d'Àrea / Matriu de Multiplicació</strong>
+            <div style="display:flex; gap:0.5rem; align-items:center; flex-wrap:wrap;">
+              <label style="font-size:0.85rem; font-weight:700;">Files (Factor 1):
+                <input type="number" id="matrixRowsInput" value="4" min="1" max="10" style="width:55px; padding:2px 6px; border-radius:6px; border:1px solid var(--border-color);" />
+              </label>
+              <span>×</span>
+              <label style="font-size:0.85rem; font-weight:700;">Regleta (Factor 2):
+                <input type="number" id="matrixColsInput" value="6" min="1" max="18" style="width:60px; padding:2px 6px; border-radius:6px; border:1px solid var(--border-color);" />
+              </label>
+              <button type="button" class="mini-btn active" id="btnBuildMatrixToRowB">Passa a la Fila B</button>
+            </div>
+          </div>
+          <div class="matrix-rows-container" id="matrixRowsContainer"></div>
+          <div id="matrixFormulaText" style="font-weight:800; color:var(--primary); font-size:0.95rem;"></div>
+        </div>
+
+        <!-- TRADUCCIÓ SIMBÒLICA EN TEMPS REAL (CPA: Concret - Pictòric - Simbòlic) -->
+        <div class="symbolic-panel">
+          <div class="symbolic-card">
+            <span class="symbolic-label">Expressió de la Fila A</span>
+            <div class="symbolic-equation" id="symbolicRowA">0</div>
+          </div>
+          <div class="symbolic-card">
+            <span class="symbolic-label">Expressió de la Fila B (Suma i Agrupació)</span>
+            <div class="symbolic-equation" id="symbolicRowB">0</div>
+          </div>
+          <div class="symbolic-card">
+            <span class="symbolic-label">Comparació i Relació Matemàtica</span>
+            <div class="symbolic-equation" id="symbolicComparison">Fila A = Fila B (0 = 0)</div>
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <!-- SECCIÓ COMPLEMENTÀRIA: TAULER DE VALOR POSICIONAL DE 6è (CM, DM, UM, C, D, U, d, c) -->
+    <section class="place-value-section" id="placeValueSection" aria-label="Tauler de valor posicional amb regletes">
+      <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:0.5rem;">
+        <div>
+          <h3 style="font-size:1.15rem; font-weight:800;">🏛️ Tauler de Valor Posicional i Descomposició Polinòmica (6è de Primària)</h3>
+          <p style="font-size:0.9rem; color:var(--text-muted);">
+            Col·loca una regleta (de l'1 al 9) a cada ordre d'unitat per explorar nombres grans i decimals, i veure'n la descomposició polinòmica i lectura en català.
+          </p>
+        </div>
+        <button type="button" class="tool-btn" id="btnResetPlaceValue">🔄 Reinicia el tauler posicional</button>
+      </div>
+
+      <div class="pv-grid" id="pvGrid">
+        <!-- Generat per JS: UM, C, D, U, dècimes (d), centèsimes (c) -->
+      </div>
+
+      <div class="symbolic-panel">
+        <div class="symbolic-card">
+          <span class="symbolic-label">Nombre format</span>
+          <div class="symbolic-equation" id="pvNumberResult">2.435,6</div>
+        </div>
+        <div class="symbolic-card">
+          <span class="symbolic-label">Descomposició Aditiva i Posicional</span>
+          <div class="symbolic-equation" id="pvAdditiveResult" style="font-size:1rem;">2 UM + 4 C + 3 D + 5 U + 6 d</div>
+        </div>
+        <div class="symbolic-card">
+          <span class="symbolic-label">Descomposició Polinòmica (Potències de 10)</span>
+          <div class="symbolic-equation" id="pvPolynomialResult" style="font-size:1rem;">2×1.000 + 4×100 + 3×10 + 5×1 + 6×0,1</div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- MODAL 1: GLOSSARI VISUAL MATEMÀTIC DUA -->
+  <div class="modal-backdrop" id="modalGlossary" role="dialog" aria-modal="true" aria-labelledby="glossaryModalTitle">
+    <div class="modal-box">
+      <div class="modal-header">
+        <h2 id="glossaryModalTitle">📖 Glossari Visual de Matemàtiques amb Regletes</h2>
+        <button type="button" class="tool-btn" data-close-modal="modalGlossary">✖️ Tanca</button>
+      </div>
+      <p style="color:var(--text-muted);">
+        Suport DUA per a la comprensió del llenguatge matemàtic i dels símbols utilitzats a 6è de primària.
+      </p>
+      <div class="glossary-list" id="glossaryListContainer"></div>
+    </div>
+  </div>
+
+  <!-- MODAL 2: EL MEU PROGRÉS I AUTOREGULACIÓ (PRINCIPIS D'IMPLICACIÓ DUA) -->
+  <div class="modal-backdrop" id="modalProgress" role="dialog" aria-modal="true" aria-labelledby="progressModalTitle">
+    <div class="modal-box">
+      <div class="modal-header">
+        <h2 id="progressModalTitle">🏅 El meu Diari d'Aprenentatge i Autoregulació (DUA)</h2>
+        <button type="button" class="tool-btn" data-close-modal="modalProgress">✖️ Tanca</button>
+      </div>
+
+      <div class="symbolic-panel" id="progressSummaryCards"></div>
+
+      <div style="background:var(--bg-subtle); padding:1rem; border-radius:var(--radius-md); display:flex; flex-direction:column; gap:0.65rem;">
+        <h3 style="font-size:1rem;">🧠 Metacognició: Com m'he sentit avui resolent reptes amb regletes?</h3>
+        <div class="mood-selector" id="moodSelector">
+          <button type="button" class="mood-btn" data-mood="segur">🌟 Molt segur/a, ho puc explicar a un company/a</button>
+          <button type="button" class="mood-btn" data-mood="practicant">🚀 Ho entenc amb l'ajuda de les regletes</button>
+          <button type="button" class="mood-btn" data-mood="ajuda">🌱 Necessito més pistes i temps</button>
+        </div>
+        <label for="studentReflectionInput" style="font-weight:700; font-size:0.9rem; margin-top:0.35rem;">
+          Quina estratègia m'ha ajudat més avui? (Ex: fer el pont al 10, dibuixar les barres del problema...)
+        </label>
+        <input type="text" id="studentReflectionInput" class="answer-input" style="width:100%; font-weight:500;" placeholder="Escriu aquí la teva reflexió..." />
+      </div>
+
+      <div style="display:flex; justify-content:space-between; flex-wrap:wrap; gap:0.5rem;">
+        <button type="button" class="tool-btn" id="btnResetProgress">🗑️ Reinicia les medalles</button>
+        <button type="button" class="tool-btn primary-cta" id="btnPrintReport">🖨️ Imprimeix / Desa el meu resum</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL 3: ESPAI DOCENT (JUSTIFICACIÓ DUA + CREADOR DE REPTES A MIDA) -->
+  <div class="modal-backdrop" id="modalTeacher" role="dialog" aria-modal="true" aria-labelledby="teacherModalTitle">
+    <div class="modal-box">
+      <div class="modal-header">
+        <h2 id="teacherModalTitle">👩‍🏫 Espai Docent: Guia DUA 6è i Generador de Reptes</h2>
+        <button type="button" class="tool-btn" data-close-modal="modalTeacher">✖️ Tanca</button>
+      </div>
+
+      <div style="display:grid; gap:0.85rem;">
+        <div class="glossary-item">
+          <strong>1. Múltiples mitjans de representació (Què s'aprèn):</strong>
+          <p style="font-size:0.9rem; margin-top:0.25rem;">
+            Connexió simultània <em>Concret-Pictòric-Simbòlic (CPA)</em>, síntesi de veu en català (🔊), tipografia d'alta llegibilitat per a dislèxia, alt contrast, mode daltònics amb codi de lletres i escala adaptable ($\times 0{,}1$, $\times 1$, $\times 10$, $\times 100$) per atendre tot l'alumnat de 6è a la mateixa activitat.
+          </p>
+        </div>
+        <div class="glossary-item">
+          <strong>2. Múltiples mitjans d'acció i expressió (Com s'aprèn):</strong>
+          <p style="font-size:0.9rem; margin-top:0.25rem;">
+            Tres nivells d'estrelles seleccionables sense estigma (⭐ <strong>Principiant</strong>, ⭐⭐ <strong>Mitjà</strong> i ⭐⭐⭐ <strong>Expert</strong>), pistes graduades en 3 passos, mode tisores per descompondre peces i validació tant manipulativa com numèrica.
+          </p>
+        </div>
+        <div class="glossary-item">
+          <strong>3. Múltiples mitjans d'implicació i compromís (Per què s'aprèn):</strong>
+          <p style="font-size:0.9rem; margin-top:0.25rem;">
+            Feedback formatiu no punitiu que mostra visualment quant falta o sobra, sistema de recompensa per estrelles (⭐, ⭐⭐, ⭐⭐⭐), problemes amb contextos propers a 6è (robòtica, colònies, hort, pressupost) i diari de metacognició.
+          </p>
+        </div>
+      </div>
+
+      <hr style="border:none; border-top:1px solid var(--border-color);" />
+
+      <h3>✨ Crea un Repte o Problema en viu per a la Pissarra Digital</h3>
+      <div style="display:grid; gap:0.65rem; background:var(--bg-subtle); padding:1rem; border-radius:var(--radius-md);">
+        <label style="font-weight:700; font-size:0.88rem;">
+          Títol del repte:
+          <input type="text" id="customTitleInput" class="answer-input" style="width:100%; margin-top:4px; font-weight:600;" placeholder="Ex: Repte cooperatiu de la classe de 6è" />
+        </label>
+        <label style="font-weight:700; font-size:0.88rem;">
+          Enunciat o consigna en català:
+          <input type="text" id="customInstructionInput" class="answer-input" style="width:100%; margin-top:4px; font-weight:600;" placeholder="Ex: Construeix el nombre 45 a la Fila B utilitzant com a màxim 2 regletes del 10." />
+        </label>
+        <div style="display:flex; gap:1rem; flex-wrap:wrap;">
+          <label style="font-weight:700; font-size:0.88rem;">
+            Nivell:
+            <select id="customLevelSelect" class="answer-input" style="width:170px; margin-left:6px;">
+              <option value="1">⭐ Principiant</option>
+              <option value="2" selected>⭐⭐ Mitjà</option>
+              <option value="3">⭐⭐⭐ Expert</option>
+            </select>
+          </label>
+          <label style="font-weight:700; font-size:0.88rem;">
+            Valor objectiu (en unitats de regleta):
+            <input type="number" id="customTargetInput" class="answer-input" style="width:110px; margin-left:6px;" value="45" min="1" max="100" />
+          </label>
+          <label style="font-weight:700; font-size:0.88rem;">
+            Escala:
+            <select id="customScaleSelect" class="answer-input" style="width:140px; margin-left:6px;">
+              <option value="1">×1 (Unitats)</option>
+              <option value="10">×10 (Desenes)</option>
+              <option value="100">×100 (Centenes)</option>
+              <option value="0.1">×0,1 (Decimals)</option>
+            </select>
+          </label>
+        </div>
+        <button type="button" class="tool-btn primary-cta" id="btnLaunchCustomChallenge" style="justify-self:start;">
+          🚀 Llança aquest repte al tauler ara
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL 4: PARTIR REGLETA (MODE TISORES) -->
+  <div class="modal-backdrop" id="modalSplitRod" role="dialog" aria-modal="true" aria-labelledby="splitModalTitle">
+    <div class="modal-box" style="max-width:480px;">
+      <div class="modal-header">
+        <h2 id="splitModalTitle">✂️ Partir i descompondre la regleta</h2>
+        <button type="button" class="tool-btn" data-close-modal="modalSplitRod">✖️ Cancel·la</button>
+      </div>
+      <p id="splitModalSubtitle" style="color:var(--text-muted); font-weight:600;"></p>
+      <div id="splitOptionsContainer" style="display:grid; gap:0.5rem;"></div>
+    </div>
+  </div>
+
+  <footer class="footer-bar">
+     recurs educatiu obert per a <strong>6è de Primària</strong> · Regletes de Cuisenaire i Disseny Universal per a l'Aprenentatge (DUA) · Fet en català
+  </footer>
+
+  <script src="data.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
