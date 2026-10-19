@@ -165,10 +165,16 @@
       <section class="mat-card" aria-label="Tauler de regletes">
         <div class="mat-toolbar">
           <div class="symbolic-inline-box" id="symbolicSummaryBox">
-            🧮 El teu tren: <strong id="symbolicRowB">0</strong>
+            🧮 Regletes posades: <strong id="symbolicRowB">0</strong>
           </div>
 
           <div class="mat-tools-right">
+            <!-- Casella perquè els nens escriguin el resultat exacte després de representar amb regletes -->
+            <div class="exact-result-box" id="exactResultBox" style="display: none;">
+              <label for="exactResultInput" id="exactResultLabel" style="font-weight: 800;">✍️ Resultat:</label>
+              <input type="number" id="exactResultInput" class="answer-input" placeholder="?" autocomplete="off" />
+            </div>
+
             <button type="button" class="tool-btn" id="btnClearRowB">
               🗑️ Esborra
             </button>

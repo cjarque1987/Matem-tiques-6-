@@ -1,6 +1,7 @@
 // ============================================================================
 // LÒGICA DE L'APLICACIÓ — REGLETES DE CUISENAIRE (INTERFÍCIE SIMPLE I FÀCIL)
-// Inclou Multiplicació Estil Tècnica Italiana (Factor Horitzontal × Vertical)
+// 1) Representar l'operació amb regletes (inclosa Tècnica Italiana en multiplicació)
+// 2) Escriure el resultat exacte a la casella després de representar-ho
 // ============================================================================
 
 const state = {
@@ -156,6 +157,14 @@ function getCurrentChallenge() {
   return list[state.activeChallengeIndex];
 }
 
+// Calcula quin és el resultat numèric exacte que l'alumne ha d'escriure
+function getExpectedExactResult(current) {
+  if (!current) return null;
+  if (state.currentModule === "problemes") return current.expectedAnswer;
+  if (state.currentModule === "restes") return current.minuend - current.subtrahend;
+  return current.targetValue;
+}
+
 // Carrega l'enunciat i les regletes inicials del repte
 function loadChallengeState() {
   hideFeedback();
@@ -170,6 +179,11 @@ function loadChallengeState() {
   const wrapperRowA = document.getElementById("wrapperRowA");
   const matCanvas = document.getElementById("matCanvas");
   const italianContainer = document.getElementById("italianMultContainer");
+  const exactResultBox = document.getElementById("exactResultBox");
+  const exactResultLabel = document.getElementById("exactResultLabel");
+  const exactResultInput = document.getElementById("exactResultInput");
+
+  exactResultInput.value = "";
 
   if (state.currentModule === "laboratori") {
     levelBar.style.display = "none";
@@ -180,6 +194,7 @@ function loadChallengeState() {
     wrapperRowA.style.display = "none";
     matCanvas.style.display = "flex";
     italianContainer.style.display = "none";
+    exactResultBox.style.display = "none";
 
     document.getElementById("challengeBadge").textContent = "🧪 Tauler Lliure";
     document.getElementById("challengeTitle").textContent = "Practica i explora lliurement amb les regletes";
@@ -211,11 +226,28 @@ function loadChallengeState() {
     `${levelNames[current.level]} · Repte ${state.activeChallengeIndex + 1} de ${list.length} ${isCompleted ? "✅" : ""}`;
   document.getElementById("challengeTitle").textContent = current.title;
 
+  // Configurem la casella de resultat exacte per a les operacions (Sumes, Restes, Multiplicacions)
+  if (state.currentModule === "sumes") {
+    exactResultBox.style.display = "inline-flex";
+    const sumExpr = (current.referenceRods || []).join(" + ");
+    exactResultLabel.textContent = `✍️ Resultat (${sumExpr} =):`;
+  } else if (state.currentModule === "restes") {
+    exactResultBox.style.display = "inline-flex";
+    exactResultLabel.textContent = `✍️ Resultat (${current.minuend} - ${current.subtrahend} =):`;
+  } else if (state.currentModule === "multiplicacions") {
+    exactResultBox.style.display = "inline-flex";
+    const hTotal = current.hFactorRods.reduce((a, b) => a + b, 0);
+    exactResultLabel.textContent = `✍️ Resultat (${current.vFactor} × ${hTotal} =):`;
+  } else {
+    exactResultBox.style.display = "none";
+  }
+
   if (state.currentModule === "multiplicacions") {
     problemBar.classList.remove("visible");
     matCanvas.style.display = "none";
     italianContainer.style.display = "flex";
-    document.getElementById("challengeInstruction").textContent = current.instruction;
+    document.getElementById("challengeInstruction").textContent =
+      `${current.instruction} Després, escriu el resultat exacte a la casella!`;
     state.multRows = Array.from({ length: current.vFactor }, () => []);
     renderWorkspace();
     return;
@@ -228,8 +260,9 @@ function loadChallengeState() {
   if (state.currentModule === "problemes") {
     problemBar.classList.add("visible");
     wrapperRowA.style.display = "none";
-    document.getElementById("challengeInstruction").textContent = `${current.contextIcon} ${current.statement}`;
-    document.getElementById("problemQuestionLabel").textContent = current.question;
+    document.getElementById("challengeInstruction").textContent =
+      `${current.contextIcon} ${current.statement} (Representa-ho amb les regletes al tauler i escriu la resposta exacta!)`;
+    document.getElementById("problemQuestionLabel").textContent = `✍️ ${current.question}`;
     document.getElementById("problemUnitSpan").textContent = current.unit || "";
     document.getElementById("problemNumericInput").value = "";
     state.rowA = [];
@@ -237,7 +270,10 @@ function loadChallengeState() {
   } else {
     problemBar.classList.remove("visible");
     wrapperRowA.style.display = "flex";
-    document.getElementById("challengeInstruction").textContent = current.instruction;
+    const extraPrompt = (state.currentModule === "sumes" || state.currentModule === "restes")
+      ? " Després d'usar les regletes, escriu el resultat exacte a la casella!"
+      : "";
+    document.getElementById("challengeInstruction").textContent = current.instruction + extraPrompt;
     state.rowA = [...(current.referenceRods || [])];
     state.rowB = [...(current.initialRowB || [])];
   }
@@ -255,7 +291,6 @@ function addRodToStudentRow(rodValue) {
     if (!current) return;
     const hTotal = current.hFactorRods.reduce((a, b) => a + b, 0);
 
-    // Busquem la primera fila que tingui espai suficient per a aquesta regleta
     let placed = false;
     for (let r = 0; r < state.multRows.length; r++) {
       const rowSum = state.multRows[r].reduce((a, b) => a + b, 0);
@@ -269,7 +304,7 @@ function addRodToStudentRow(rodValue) {
     if (!placed) {
       const allFull = state.multRows.every(row => row.reduce((a, b) => a + b, 0) === hTotal);
       if (allFull) {
-        showFeedback("El rectangle ja està completament ple! Prem el botó verd '✅ Comprova!'", "success");
+        showFeedback("El rectangle ja està ple! Ara escriu el resultat exacte a la casella i prem '✅ Comprova!'", "success");
       } else {
         showFeedback(`La regleta del ${rodValue} és massa llarga per a l'espai que queda a les files (amplada del factor horitzontal: ${hTotal}). Prova amb una regleta que hi càpiga!`, "warning");
       }
@@ -320,7 +355,6 @@ function renderItalianMultiplicationBoard(current) {
   const hTotal = current.hFactorRods.reduce((a, b) => a + b, 0);
   const vFactor = current.vFactor;
 
-  // Etiquetes dels factors
   if (current.hFactorRods.length > 1) {
     topLabel.textContent = `Factor horitzontal: ${hTotal} (${current.hFactorRods.join(" + ")})`;
   } else {
@@ -328,22 +362,21 @@ function renderItalianMultiplicationBoard(current) {
   }
   leftLabel.textContent = `Factor vertical: ${vFactor}`;
 
-  // Dibuixem el/s reglet/s del factor horitzontal a dalt
+  // Reglet/s del factor horitzontal a dalt
   topRodsEl.innerHTML = "";
   current.hFactorRods.forEach(val => {
     topRodsEl.appendChild(createRodElement(val));
   });
 
-  // Dibuixem el reglet del factor vertical a l'esquerra (en vertical!)
+  // Reglet del factor vertical a l'esquerra (en vertical)
   leftRodWrap.innerHTML = "";
   leftRodWrap.appendChild(createVerticalRodElement(vFactor));
 
-  // Configurem les dimensions exactes del rectangle interior a omplir
+  // Rectangle interior a omplir
   interiorArea.innerHTML = "";
   interiorArea.style.width = `${hTotal * 36 + 6}px`;
   interiorArea.style.height = `${vFactor * 40 + 6}px`;
 
-  // Si el factor horitzontal està descompost (ex: 10 + 3), dibuixem la línia divisòria vertical de la graella italiana
   if (current.hFactorRods.length > 1) {
     let accUnits = 0;
     for (let i = 0; i < current.hFactorRods.length - 1; i++) {
@@ -355,10 +388,7 @@ function renderItalianMultiplicationBoard(current) {
     }
   }
 
-  // Dibuixem cada fila interior del rectangle amb les regletes que l'alumne hi ha posat
-  let totalFilled = 0;
   let completedRows = 0;
-
   for (let r = 0; r < vFactor; r++) {
     const rowEl = document.createElement("div");
     rowEl.className = "italian-interior-row";
@@ -366,7 +396,6 @@ function renderItalianMultiplicationBoard(current) {
 
     const rowRods = state.multRows[r] || [];
     const rowSum = rowRods.reduce((a, b) => a + b, 0);
-    totalFilled += rowSum;
     if (rowSum === hTotal) completedRows++;
 
     rowRods.forEach((val, cIdx) => {
@@ -378,16 +407,13 @@ function renderItalianMultiplicationBoard(current) {
     interiorArea.appendChild(rowEl);
   }
 
-  // Actualitzem el resum simbòlic superior
+  // No revelem el producte total perquè el nen l'hagi de calcular i escriure!
   const symEl = document.getElementById("symbolicRowB");
-  if (totalFilled === 0) {
-    symEl.textContent = `0  (Omple les ${vFactor} files de ${hTotal})`;
-  } else if (current.hFactorRods.length > 1 && totalFilled === current.targetValue) {
-    const p1 = vFactor * current.hFactorRods[0];
-    const p2 = vFactor * current.hFactorRods[1];
-    symEl.textContent = `${vFactor} × (${current.hFactorRods.join(" + ")}) = ${p1} + ${p2} = ${totalFilled}`;
+  const isCompleted = state.completedIds.includes(current.id);
+  if (isCompleted) {
+    symEl.textContent = `${vFactor} × ${hTotal} = ${current.targetValue}`;
   } else {
-    symEl.textContent = `Àrea omplerta: ${totalFilled} de ${current.targetValue} (${completedRows}/${vFactor} files completes)`;
+    symEl.textContent = `Files del rectangle completes: ${completedRows} de ${vFactor}`;
   }
 }
 
@@ -425,18 +451,21 @@ function renderWorkspace() {
 
   // Bandera d'objectiu visual
   const currentChallenge = getCurrentChallenge();
+  const isSolved = currentChallenge && state.completedIds.includes(currentChallenge.id);
+
   if (currentChallenge && state.currentModule !== "laboratori") {
     const targetUnits = state.currentModule === "problemes"
       ? currentChallenge.targetRodUnits
       : currentChallenge.targetValue;
 
-    if (targetUnits && targetUnits <= 36) {
+    if (targetUnits && targetUnits <= 36 && state.currentModule !== "problemes") {
       const marker = document.createElement("div");
       marker.className = "target-marker-line";
       marker.style.left = `${targetUnits * 36}px`;
       const flag = document.createElement("span");
       flag.className = "target-marker-flag";
-      flag.textContent = `Meta: ${targetUnits}`;
+      // En Sumes no mostrem el número a la bandera per no donar el resultat abans que el nen el calculi!
+      flag.textContent = state.currentModule === "sumes" ? "Final de la suma" : `Meta: ${targetUnits}`;
       marker.appendChild(flag);
       trackB.appendChild(marker);
     }
@@ -445,31 +474,45 @@ function renderWorkspace() {
   const sumA = state.rowA.reduce((a, b) => a + b, 0);
   const sumB = state.rowB.reduce((a, b) => a + b, 0);
 
-  document.getElementById("sumPillRowA").textContent = sumA;
-  document.getElementById("sumPillRowB").textContent = sumB;
-
+  // Evitem revelar el resultat de l'operació a les píndoles abans que el nen l'escrigui!
+  const pillA = document.getElementById("sumPillRowA");
+  const pillB = document.getElementById("sumPillRowB");
   const symEl = document.getElementById("symbolicRowB");
-  if (state.rowB.length === 0) {
-    symEl.textContent = "0";
-  } else if (currentChallenge && currentChallenge.operationMode === "subtraction") {
+
+  if (state.currentModule === "sumes" && !isSolved) {
+    pillA.textContent = state.rowA.join(" + ");
+    pillB.textContent = state.rowB.length ? `${state.rowB.join(" + ")} = ?` : "0";
+    symEl.textContent = state.rowB.length ? `${state.rowB.join(" + ")} = ?` : "0";
+  } else if (state.currentModule === "restes" && !isSolved) {
+    pillA.textContent = sumA;
+    pillB.textContent = state.rowB.join(" + ");
     const subUnits = (currentChallenge.initialRowB || []).reduce((a, b) => a + b, 0);
-    const addedUnits = Math.max(0, sumB - subUnits);
-    symEl.textContent = `${sumA} - ${subUnits} = ${addedUnits}   (perquè ${subUnits} + ${addedUnits} = ${sumB})`;
+    const addedRods = state.rowB.slice((currentChallenge.initialRowB || []).length);
+    symEl.textContent = addedRods.length
+      ? `Has afegit: ${addedRods.join(" + ")}  (${sumA} - ${subUnits} = ?)`
+      : `Afegeix la regleta que falta de ${subUnits} fins a ${sumA}`;
+  } else if (state.currentModule === "problemes" && !isSolved) {
+    pillB.textContent = state.rowB.length ? `${state.rowB.join(" + ")} = ?` : "0";
+    symEl.textContent = state.rowB.length ? `${state.rowB.join(" + ")} = ?` : "0";
   } else {
-    symEl.textContent = `${state.rowB.join(" + ")} = ${sumB}`;
+    pillA.textContent = sumA;
+    pillB.textContent = sumB;
+    symEl.textContent = state.rowB.length ? `${state.rowB.join(" + ")} = ${sumB}` : "0";
   }
 
   updateProgressBadges();
 }
 
-// Comprovació de la resposta de l'alumne
+// Comprovació: 1r) Representació amb regletes i 2n) Resultat exacte escrit pel nen
 function verifyCurrentChallenge() {
   const current = getCurrentChallenge();
   if (!current) return;
 
   const starsStr = "⭐".repeat(current.level || 1);
 
-  // 1) Multiplicacions (Tècnica Italiana)
+  // ==========================================================================
+  // 1) MULTIPLICACIONS (TÈCNICA ITALIANA + RESULTAT EXACTE)
+  // ==========================================================================
   if (state.currentModule === "multiplicacions") {
     const hTotal = current.hFactorRods.reduce((a, b) => a + b, 0);
     const totalFilled = state.multRows.reduce(
@@ -481,56 +524,101 @@ function verifyCurrentChallenge() {
     );
 
     if (!allRowsFull || totalFilled !== current.targetValue) {
-      const missing = current.targetValue - totalFilled;
       showFeedback(
-        `📏 Encara queden buits dins del rectangle! Has omplert ${totalFilled} i l'àrea total és ${current.targetValue} (et falten ${missing}).`,
+        `📏 Primer acaba d'omplir totes les files del rectangle amb les regletes!`,
+        "warning"
+      );
+      return;
+    }
+
+    const inputEl = document.getElementById("exactResultInput");
+    const writtenVal = parseInt(inputEl.value, 10);
+    if (isNaN(writtenVal)) {
+      inputEl.focus();
+      showFeedback(
+        `✅ El rectangle de regletes està perfecte! Ara escriu el resultat exacte de ${current.vFactor} × ${hTotal} a la casella i prem Comprova!`,
+        "warning"
+      );
+      return;
+    }
+
+    if (writtenVal !== current.targetValue) {
+      inputEl.focus();
+      showFeedback(
+        `📏 El rectangle de regletes està molt bé, però el resultat escrit (${writtenVal}) no és exacte. Compta bé quant sumen les regletes del rectangle!`,
         "warning"
       );
       return;
     }
 
     markCompleted(current.id);
-    showFeedback(`🌟 Fantàstic! Has guanyat ${starsStr}! ${current.explanation}`, "success");
+    showFeedback(`🌟 Fantàstic! Has representat la multiplicació i has escrit el resultat exacte (${current.targetValue}). Has guanyat ${starsStr}!`, "success");
     renderWorkspace();
     return;
   }
 
-  // 2) Problemes
+  // ==========================================================================
+  // 2) PROBLEMES (REPRESENTACIÓ AMB REGLETES + RESPOSTA EXACTA)
+  // ==========================================================================
   if (state.currentModule === "problemes") {
-    const numericVal = parseInt(document.getElementById("problemNumericInput").value, 10);
+    const inputEl = document.getElementById("problemNumericInput");
+    const numericVal = parseInt(inputEl.value, 10);
     const sumB = state.rowB.reduce((a, b) => a + b, 0);
 
-    if (numericVal === current.expectedAnswer || sumB === current.targetRodUnits) {
-      markCompleted(current.id);
-      document.getElementById("problemNumericInput").value = current.expectedAnswer;
-      showFeedback(`🎉 Molt bé! Has guanyat ${starsStr}! Resposta: ${current.expectedAnswer} ${current.unit}. ${current.explanation}`, "success");
-    } else {
-      showFeedback(`Encara no és correcte. Pots escriure el número a la casella o fer-lo amb les regletes (ara tens ${sumB}). Prem "💡 Necessito una pista" si vols ajuda!`, "warning");
+    if (sumB !== current.targetRodUnits) {
+      showFeedback(
+        `📏 Primer representa el resultat del problema posant les regletes al tauler! (Pots prémer "🪄 Ajuda'm amb les regletes" o "💡 Necessito una pista").`,
+        "warning"
+      );
+      return;
     }
+
+    if (isNaN(numericVal)) {
+      inputEl.focus();
+      showFeedback(
+        `✅ Les regletes estan molt bé! Ara escriu el resultat exacte a la casella de Resposta i prem Comprova!`,
+        "warning"
+      );
+      return;
+    }
+
+    if (numericVal !== current.expectedAnswer) {
+      inputEl.focus();
+      showFeedback(
+        `📏 Les regletes del tauler són correctes, però el número escrit (${numericVal}) no coincideix. Compta el valor de les teves regletes!`,
+        "warning"
+      );
+      return;
+    }
+
+    markCompleted(current.id);
+    showFeedback(`🎉 Molt bé! Has guanyat ${starsStr}! Resposta exacta: ${current.expectedAnswer} ${current.unit}. ${current.explanation}`, "success");
+    renderWorkspace();
     return;
   }
 
-  // 3) Descomposició, Sumes i Restes
+  // ==========================================================================
+  // 3) DESCOMPOSICIÓ, SUMES I RESTES
+  // ==========================================================================
   const sumB = state.rowB.reduce((a, b) => a + b, 0);
   const target = current.targetValue;
 
   if (sumB !== target) {
-    const diff = Math.abs(target - sumB);
     if (sumB < target) {
-      showFeedback(`📏 El teu tren suma ${sumB} i ha d'arribar a ${target}. Et falten ${diff}!`, "warning");
+      showFeedback(`📏 El teu tren de regletes encara és massa curt! Afegeix les regletes que falten per igualar el model.`, "warning");
     } else {
-      showFeedback(`📏 T'has passat! El teu tren suma ${sumB} i l'objectiu és ${target}. Et sobren ${diff}!`, "warning");
+      showFeedback(`📏 T'has passat de llargada amb les regletes! Fes clic en una peça per treure-la.`, "warning");
     }
     return;
   }
 
   const c = current.constraints || {};
   if (c.exactCount && state.rowB.length !== c.exactCount) {
-    showFeedback(`La suma dóna ${target}, però ho has de fer amb exactament ${c.exactCount} regletes (ara en tens ${state.rowB.length}).`, "warning");
+    showFeedback(`La llargada és correcta, però ho has de fer amb exactament ${c.exactCount} regletes (ara en tens ${state.rowB.length}).`, "warning");
     return;
   }
   if (c.minTotalRods && state.rowB.length < c.minTotalRods) {
-    showFeedback(`La suma és correcta, però has de posar com a mínim ${c.minTotalRods} regletes.`, "warning");
+    showFeedback(`La llargada és correcta, però has de posar com a mínim ${c.minTotalRods} regletes.`, "warning");
     return;
   }
   if (c.forbiddenRods && c.forbiddenRods.some(f => state.rowB.includes(f))) {
@@ -554,6 +642,38 @@ function verifyCurrentChallenge() {
   if (c.requiredRods && !c.requiredRods.every(req => state.rowB.includes(req))) {
     showFeedback(`Recorda utilitzar les regletes del ${c.requiredRods.join(" i ")} com demana l'enunciat.`, "warning");
     return;
+  }
+
+  // Si som a Sumes o Restes, comprovem també que el nen hagi escrit el resultat exacte!
+  if (state.currentModule === "sumes" || state.currentModule === "restes") {
+    const expectedExact = getExpectedExactResult(current);
+    const inputEl = document.getElementById("exactResultInput");
+    const writtenVal = parseInt(inputEl.value, 10);
+
+    if (isNaN(writtenVal)) {
+      inputEl.focus();
+      showFeedback(
+        `✅ Molt bé les regletes! Ara escriu el resultat exacte de l'operació a la casella i torna a prémer Comprova!`,
+        "warning"
+      );
+      return;
+    }
+
+    if (writtenVal !== expectedExact) {
+      inputEl.focus();
+      if (state.currentModule === "restes") {
+        showFeedback(
+          `📏 Les regletes estan molt bé, però el resultat de la resta (${current.minuend} - ${current.subtrahend}) és el valor de les regletes que has afegit! Revisa el número escrit.`,
+          "warning"
+        );
+      } else {
+        showFeedback(
+          `📏 Les regletes estan molt bé, però el número escrit (${writtenVal}) no és exacte. Suma el valor de les teves regletes!`,
+          "warning"
+        );
+      }
+      return;
+    }
   }
 
   markCompleted(current.id);
@@ -727,18 +847,34 @@ document.addEventListener("DOMContentLoaded", () => {
     } else {
       state.rowB = [];
     }
+    document.getElementById("exactResultInput").value = "";
     hideFeedback();
     renderWorkspace();
   });
 
   document.getElementById("btnVerifyChallenge").addEventListener("click", verifyCurrentChallenge);
 
+  // Permetre prémer Enter dins de la casella de resultat exacte per comprovar directament
+  document.getElementById("exactResultInput").addEventListener("keydown", (e) => {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      verifyCurrentChallenge();
+    }
+  });
+
+  document.getElementById("problemNumericInput").addEventListener("keydown", (e) => {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      verifyCurrentChallenge();
+    }
+  });
+
   document.getElementById("btnLoadSuggestedModel").addEventListener("click", () => {
     const current = getCurrentChallenge();
     if (current && current.suggestedModelRods) {
       state.rowB = [...current.suggestedModelRods];
       renderWorkspace();
-      showFeedback("🪄 S'han col·locat les regletes del problema al tauler. Compta quant sumen!", "success");
+      showFeedback("🪄 S'han col·locat les regletes del problema al tauler. Ara compta quant valen i escriu la resposta a la casella!", "success");
     }
   });
 
