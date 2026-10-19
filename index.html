@@ -208,6 +208,33 @@
               <div class="rod-track active-target" id="trackRowB"></div>
             </div>
           </div>
+
+          <!-- TAULER DE MULTIPLICACIÓ ESTIL TÈCNICA ITALIANA (FACTOR HORITZONTAL × FACTOR VERTICAL) -->
+          <div class="italian-mult-board" id="italianMultContainer" style="display: none;">
+            <div class="italian-mult-hint">
+              👇 <strong>Tècnica Italiana:</strong> El reglet de dalt marca l'amplada (factor horitzontal) i el reglet de l'esquerra marca les files (factor vertical). Fes clic a les regletes de la caixa per <strong>omplir l'interior del rectangle</strong>! <small>(Fes clic a una peça de dins si la vols treure)</small>
+            </div>
+
+            <div class="italian-grid-layout">
+              <!-- Cantonada amb el signe × -->
+              <div class="italian-corner-cell">✖️</div>
+
+              <!-- Capçalera superior: Factor Horitzontal (reglet/s en horitzontal) -->
+              <div class="italian-top-header">
+                <div class="italian-factor-label" id="italianTopLabel">Factor horitzontal</div>
+                <div class="italian-top-rods" id="italianTopRods"></div>
+              </div>
+
+              <!-- Columna esquerra: Factor Vertical (reglet en vertical) -->
+              <div class="italian-left-header">
+                <div class="italian-factor-label" id="italianLeftLabel">Factor vertical</div>
+                <div class="italian-left-rod-wrap" id="italianLeftRodWrap"></div>
+              </div>
+
+              <!-- Zona interior del rectangle que l'alumne ha d'omplir amb reglets -->
+              <div class="italian-interior-area" id="italianInteriorArea"></div>
+            </div>
+          </div>
         </div>
       </section>
     </div>

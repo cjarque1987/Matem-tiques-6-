@@ -1,5 +1,6 @@
 // ============================================================================
 // LÒGICA DE L'APLICACIÓ — REGLETES DE CUISENAIRE (INTERFÍCIE SIMPLE I FÀCIL)
+// Inclou Multiplicació Estil Tècnica Italiana (Factor Horitzontal × Vertical)
 // ============================================================================
 
 const state = {
@@ -9,6 +10,7 @@ const state = {
   hintStep: 0,
   rowA: [],
   rowB: [],
+  multRows: [],                   // Files del rectangle per a la multiplicació italiana
   completedIds: JSON.parse(localStorage.getItem("cuisenaire_6e_completed_v2") || "[]")
 };
 
@@ -36,7 +38,7 @@ function speakTextCatalan(text) {
   window.speechSynthesis.speak(utterance);
 }
 
-// Creació d'una regleta visual
+// Creació d'una regleta horitzontal
 function createRodElement(rodValue, options = {}) {
   const meta = getRodMeta(rodValue);
   const el = document.createElement("div");
@@ -65,6 +67,25 @@ function createRodElement(rodValue, options = {}) {
       }
     });
   }
+
+  return el;
+}
+
+// Creació d'una regleta VERTICAL (per al factor vertical de la Tècnica Italiana)
+function createVerticalRodElement(rodValue) {
+  const meta = getRodMeta(rodValue);
+  const el = document.createElement("div");
+  el.className = "cuisenaire-rod-vertical";
+  el.style.height = `${rodValue * 40}px`;
+  el.style.backgroundColor = meta.color;
+  el.style.borderColor = meta.border;
+  el.style.color = meta.text;
+  el.title = `Factor vertical: Regleta ${meta.name} (${rodValue})`;
+
+  const labelSpan = document.createElement("span");
+  labelSpan.className = "rod-text-span";
+  labelSpan.textContent = rodValue;
+  el.appendChild(labelSpan);
 
   return el;
 }
@@ -147,6 +168,8 @@ function loadChallengeState() {
   const verifyBtn = document.getElementById("btnVerifyChallenge");
   const hintBtn = document.getElementById("btnShowHint");
   const wrapperRowA = document.getElementById("wrapperRowA");
+  const matCanvas = document.getElementById("matCanvas");
+  const italianContainer = document.getElementById("italianMultContainer");
 
   if (state.currentModule === "laboratori") {
     levelBar.style.display = "none";
@@ -155,6 +178,8 @@ function loadChallengeState() {
     verifyBtn.style.display = "none";
     hintBtn.style.display = "none";
     wrapperRowA.style.display = "none";
+    matCanvas.style.display = "flex";
+    italianContainer.style.display = "none";
 
     document.getElementById("challengeBadge").textContent = "🧪 Tauler Lliure";
     document.getElementById("challengeTitle").textContent = "Practica i explora lliurement amb les regletes";
@@ -186,6 +211,20 @@ function loadChallengeState() {
     `${levelNames[current.level]} · Repte ${state.activeChallengeIndex + 1} de ${list.length} ${isCompleted ? "✅" : ""}`;
   document.getElementById("challengeTitle").textContent = current.title;
 
+  if (state.currentModule === "multiplicacions") {
+    problemBar.classList.remove("visible");
+    matCanvas.style.display = "none";
+    italianContainer.style.display = "flex";
+    document.getElementById("challengeInstruction").textContent = current.instruction;
+    state.multRows = Array.from({ length: current.vFactor }, () => []);
+    renderWorkspace();
+    return;
+  }
+
+  // Resta de mòduls (Descomposició, Sumes, Restes, Problemes)
+  matCanvas.style.display = "flex";
+  italianContainer.style.display = "none";
+
   if (state.currentModule === "problemes") {
     problemBar.classList.add("visible");
     wrapperRowA.style.display = "none";
@@ -206,8 +245,42 @@ function loadChallengeState() {
   renderWorkspace();
 }
 
+// Afegir una regleta quan l'alumne fa clic a la paleta de l'esquerra
 function addRodToStudentRow(rodValue) {
   hideFeedback();
+
+  // Si som a Multiplicacions (Tècnica Italiana), col·loquem la regleta a la primera fila del rectangle on hi càpiga!
+  if (state.currentModule === "multiplicacions") {
+    const current = getCurrentChallenge();
+    if (!current) return;
+    const hTotal = current.hFactorRods.reduce((a, b) => a + b, 0);
+
+    // Busquem la primera fila que tingui espai suficient per a aquesta regleta
+    let placed = false;
+    for (let r = 0; r < state.multRows.length; r++) {
+      const rowSum = state.multRows[r].reduce((a, b) => a + b, 0);
+      if (rowSum + rodValue <= hTotal) {
+        state.multRows[r].push(rodValue);
+        placed = true;
+        break;
+      }
+    }
+
+    if (!placed) {
+      const allFull = state.multRows.every(row => row.reduce((a, b) => a + b, 0) === hTotal);
+      if (allFull) {
+        showFeedback("El rectangle ja està completament ple! Prem el botó verd '✅ Comprova!'", "success");
+      } else {
+        showFeedback(`La regleta del ${rodValue} és massa llarga per a l'espai que queda a les files (amplada del factor horitzontal: ${hTotal}). Prova amb una regleta que hi càpiga!`, "warning");
+      }
+      return;
+    }
+
+    renderWorkspace();
+    return;
+  }
+
+  // Resta de mòduls (tren lineal)
   const currentSum = state.rowB.reduce((a, b) => a + b, 0);
   if (currentSum + rodValue > 36) {
     showFeedback("Ja no hi caben més regletes a la fila! Fes clic en una regleta per treure-la.", "warning");
@@ -220,7 +293,6 @@ function addRodToStudentRow(rodValue) {
 function removeRodFromStudentRow(index) {
   hideFeedback();
   const current = getCurrentChallenge();
-  // En les restes, la primera peça (o peces del substrahend) ja ve donada
   if (current && current.operationMode === "subtraction" && current.initialRowB) {
     if (index < current.initialRowB.length) {
       showFeedback(`Aquesta peça (${current.subtrahend}) és la part inicial de la resta. Afegeix al seu costat la peça que falta!`, "warning");
@@ -231,7 +303,102 @@ function removeRodFromStudentRow(index) {
   renderWorkspace();
 }
 
+function removeRodFromItalianGrid(rowIndex, colIndex) {
+  hideFeedback();
+  state.multRows[rowIndex].splice(colIndex, 1);
+  renderWorkspace();
+}
+
+// Renderització del tauler de Multiplicació Estil Tècnica Italiana
+function renderItalianMultiplicationBoard(current) {
+  const topLabel = document.getElementById("italianTopLabel");
+  const topRodsEl = document.getElementById("italianTopRods");
+  const leftLabel = document.getElementById("italianLeftLabel");
+  const leftRodWrap = document.getElementById("italianLeftRodWrap");
+  const interiorArea = document.getElementById("italianInteriorArea");
+
+  const hTotal = current.hFactorRods.reduce((a, b) => a + b, 0);
+  const vFactor = current.vFactor;
+
+  // Etiquetes dels factors
+  if (current.hFactorRods.length > 1) {
+    topLabel.textContent = `Factor horitzontal: ${hTotal} (${current.hFactorRods.join(" + ")})`;
+  } else {
+    topLabel.textContent = `Factor horitzontal: ${hTotal}`;
+  }
+  leftLabel.textContent = `Factor vertical: ${vFactor}`;
+
+  // Dibuixem el/s reglet/s del factor horitzontal a dalt
+  topRodsEl.innerHTML = "";
+  current.hFactorRods.forEach(val => {
+    topRodsEl.appendChild(createRodElement(val));
+  });
+
+  // Dibuixem el reglet del factor vertical a l'esquerra (en vertical!)
+  leftRodWrap.innerHTML = "";
+  leftRodWrap.appendChild(createVerticalRodElement(vFactor));
+
+  // Configurem les dimensions exactes del rectangle interior a omplir
+  interiorArea.innerHTML = "";
+  interiorArea.style.width = `${hTotal * 36 + 6}px`;
+  interiorArea.style.height = `${vFactor * 40 + 6}px`;
+
+  // Si el factor horitzontal està descompost (ex: 10 + 3), dibuixem la línia divisòria vertical de la graella italiana
+  if (current.hFactorRods.length > 1) {
+    let accUnits = 0;
+    for (let i = 0; i < current.hFactorRods.length - 1; i++) {
+      accUnits += current.hFactorRods[i];
+      const divider = document.createElement("div");
+      divider.className = "italian-box-divider";
+      divider.style.left = `${accUnits * 36}px`;
+      interiorArea.appendChild(divider);
+    }
+  }
+
+  // Dibuixem cada fila interior del rectangle amb les regletes que l'alumne hi ha posat
+  let totalFilled = 0;
+  let completedRows = 0;
+
+  for (let r = 0; r < vFactor; r++) {
+    const rowEl = document.createElement("div");
+    rowEl.className = "italian-interior-row";
+    rowEl.style.width = `${hTotal * 36}px`;
+
+    const rowRods = state.multRows[r] || [];
+    const rowSum = rowRods.reduce((a, b) => a + b, 0);
+    totalFilled += rowSum;
+    if (rowSum === hTotal) completedRows++;
+
+    rowRods.forEach((val, cIdx) => {
+      rowEl.appendChild(createRodElement(val, {
+        onClick: () => removeRodFromItalianGrid(r, cIdx)
+      }));
+    });
+
+    interiorArea.appendChild(rowEl);
+  }
+
+  // Actualitzem el resum simbòlic superior
+  const symEl = document.getElementById("symbolicRowB");
+  if (totalFilled === 0) {
+    symEl.textContent = `0  (Omple les ${vFactor} files de ${hTotal})`;
+  } else if (current.hFactorRods.length > 1 && totalFilled === current.targetValue) {
+    const p1 = vFactor * current.hFactorRods[0];
+    const p2 = vFactor * current.hFactorRods[1];
+    symEl.textContent = `${vFactor} × (${current.hFactorRods.join(" + ")}) = ${p1} + ${p2} = ${totalFilled}`;
+  } else {
+    symEl.textContent = `Àrea omplerta: ${totalFilled} de ${current.targetValue} (${completedRows}/${vFactor} files completes)`;
+  }
+}
+
 function renderWorkspace() {
+  if (state.currentModule === "multiplicacions") {
+    const current = getCurrentChallenge();
+    if (current) renderItalianMultiplicationBoard(current);
+    updateProgressBadges();
+    return;
+  }
+
   const trackA = document.getElementById("trackRowA");
   const trackB = document.getElementById("trackRowB");
   trackA.innerHTML = "";
@@ -302,7 +469,33 @@ function verifyCurrentChallenge() {
 
   const starsStr = "⭐".repeat(current.level || 1);
 
-  // 1) Problemes
+  // 1) Multiplicacions (Tècnica Italiana)
+  if (state.currentModule === "multiplicacions") {
+    const hTotal = current.hFactorRods.reduce((a, b) => a + b, 0);
+    const totalFilled = state.multRows.reduce(
+      (acc, row) => acc + row.reduce((a, b) => a + b, 0),
+      0
+    );
+    const allRowsFull = state.multRows.every(
+      row => row.reduce((a, b) => a + b, 0) === hTotal
+    );
+
+    if (!allRowsFull || totalFilled !== current.targetValue) {
+      const missing = current.targetValue - totalFilled;
+      showFeedback(
+        `📏 Encara queden buits dins del rectangle! Has omplert ${totalFilled} i l'àrea total és ${current.targetValue} (et falten ${missing}).`,
+        "warning"
+      );
+      return;
+    }
+
+    markCompleted(current.id);
+    showFeedback(`🌟 Fantàstic! Has guanyat ${starsStr}! ${current.explanation}`, "success");
+    renderWorkspace();
+    return;
+  }
+
+  // 2) Problemes
   if (state.currentModule === "problemes") {
     const numericVal = parseInt(document.getElementById("problemNumericInput").value, 10);
     const sumB = state.rowB.reduce((a, b) => a + b, 0);
@@ -317,7 +510,7 @@ function verifyCurrentChallenge() {
     return;
   }
 
-  // 2) Descomposició, Sumes, Restes i Multiplicacions
+  // 3) Descomposició, Sumes i Restes
   const sumB = state.rowB.reduce((a, b) => a + b, 0);
   const target = current.targetValue;
 
@@ -527,7 +720,9 @@ document.addEventListener("DOMContentLoaded", () => {
   // Esborrar i Comprovar
   document.getElementById("btnClearRowB").addEventListener("click", () => {
     const current = getCurrentChallenge();
-    if (current && current.operationMode === "subtraction" && current.initialRowB) {
+    if (state.currentModule === "multiplicacions" && current) {
+      state.multRows = Array.from({ length: current.vFactor }, () => []);
+    } else if (current && current.operationMode === "subtraction" && current.initialRowB) {
       state.rowB = [...current.initialRowB];
     } else {
       state.rowB = [];

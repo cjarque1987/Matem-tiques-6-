@@ -785,6 +785,148 @@ body.theme-dark .rod-track {
   white-space: nowrap;
 }
 
+/* ============================================================================
+   TAULER DE MULTIPLICACIÓ ESTIL TÈCNICA ITALIANA (HORITZONTAL × VERTICAL)
+   ============================================================================ */
+.italian-mult-board {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  padding: 0.4rem;
+}
+
+.italian-mult-hint {
+  font-size: 0.95rem;
+  color: var(--text-main);
+  background: var(--bg-card);
+  padding: 0.65rem 1rem;
+  border-radius: 10px;
+  border: 1.5px solid var(--border-color);
+}
+
+.italian-grid-layout {
+  display: inline-grid;
+  grid-template-columns: auto 1fr;
+  grid-template-rows: auto 1fr;
+  gap: 10px 12px;
+  align-items: start;
+  padding: 0.75rem;
+}
+
+.italian-corner-cell {
+  display: flex;
+  align-items: flex-end;
+  justify-content: flex-end;
+  height: 100%;
+  padding-bottom: 8px;
+  padding-right: 4px;
+  font-size: 1.35rem;
+  font-weight: 800;
+}
+
+.italian-top-header {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  padding-bottom: 6px;
+  border-bottom: 4px solid var(--primary);
+}
+
+.italian-factor-label {
+  font-size: 0.82rem;
+  font-weight: 800;
+  color: var(--primary);
+  text-transform: uppercase;
+}
+
+.italian-top-rods {
+  display: flex;
+  align-items: center;
+}
+
+.italian-left-header {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 5px;
+  padding-right: 8px;
+  border-right: 4px solid var(--accent);
+}
+
+.italian-left-header .italian-factor-label {
+  color: var(--accent);
+  text-align: right;
+}
+
+/* Regleta de Cuisenaire en posició VERTICAL */
+.cuisenaire-rod-vertical {
+  width: var(--unit-px);
+  border-radius: 6px;
+  border: 2px solid rgba(0, 0, 0, 0.28);
+  box-shadow: inset 2px 0 0 rgba(255, 255, 255, 0.35),
+              inset -3px 0 0 rgba(0, 0, 0, 0.22),
+              0 2px 4px rgba(0, 0, 0, 0.1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 800;
+  font-size: 0.95rem;
+  position: relative;
+  user-select: none;
+  flex-shrink: 0;
+  overflow: hidden;
+}
+
+body.show-rod-ticks .cuisenaire-rod-vertical::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-image: repeating-linear-gradient(
+    to bottom,
+    transparent,
+    transparent calc(var(--rod-height) - 2px),
+    rgba(0, 0, 0, 0.2) calc(var(--rod-height) - 2px),
+    rgba(0, 0, 0, 0.2) var(--rod-height)
+  );
+  pointer-events: none;
+}
+
+/* Zona interior del rectangle que l'alumne ha d'omplir amb regletes */
+.italian-interior-area {
+  display: flex;
+  flex-direction: column;
+  background-color: rgba(255, 255, 255, 0.75);
+  background-image:
+    linear-gradient(to right, rgba(148, 163, 184, 0.35) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(148, 163, 184, 0.35) 1px, transparent 1px);
+  background-size: var(--unit-px) var(--rod-height);
+  border: 3px dashed var(--primary);
+  border-radius: 8px;
+  position: relative;
+  overflow: hidden;
+}
+
+body.theme-dark .italian-interior-area {
+  background-color: rgba(15, 23, 42, 0.7);
+}
+
+.italian-interior-row {
+  height: var(--rod-height);
+  display: flex;
+  align-items: center;
+  position: relative;
+}
+
+.italian-box-divider {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 3px;
+  border-left: 3px dashed var(--accent);
+  pointer-events: none;
+  z-index: 5;
+}
+
 .footer-bar {
   text-align: center;
   padding: 0.85rem;

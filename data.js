@@ -465,49 +465,49 @@ const MODULE_EXERCISES = {
   ],
 
   // ==========================================================================
-  // 4. MULTIPLICACIONS
+  // 4. MULTIPLICACIONS (TÈCNICA ITALIANA: FACTOR HORITZONTAL × FACTOR VERTICAL)
   // ==========================================================================
   multiplicacions: [
     // ⭐ PRINCIPIANT
     {
       id: "mul-1-1",
       level: 1,
-      title: "3 vegades 4 (3 × 4)",
-      instruction: "Representa la multiplicació 3 × 4 posant 3 regletes del número 4.",
+      title: "3 × 4 (Tècnica Italiana)",
+      instruction: "Mira el factor horitzontal a dalt (4) i el factor vertical a l'esquerra (3). Omple les 3 files de l'interior del rectangle amb regletes del 4!",
+      vFactor: 3,
+      hFactorRods: [4],
       targetValue: 12,
-      referenceRods: [10, 2],
-      constraints: { exactCount: 3, requiredRods: [4], sameColorOnly: true },
       hints: [
-        "3 × 4 vol dir posar 3 vegades la regleta rosa (4).",
-        "Fes clic 3 vegades a la regleta Rosa (4) per fer 4 + 4 + 4 = 12."
+        "El reglet vertical del 3 t'indica que hi ha 3 files, i el reglet horitzontal del 4 marca l'amplada.",
+        "Fes clic 3 vegades a la regleta Rosa (4) per omplir tot el rectangle (3 × 4 = 12)!"
       ],
-      explanation: "Molt bé! 3 × 4 = 4 + 4 + 4 = 12."
+      explanation: "Molt bé! Has omplert el rectangle de 3 × 4 = 12."
     },
     {
       id: "mul-1-2",
       level: 1,
-      title: "4 vegades 5 (4 × 5)",
-      instruction: "Construeix 4 × 5 posant 4 regletes del número 5.",
+      title: "4 × 5 (Tècnica Italiana)",
+      instruction: "A dalt tenim el 5 en horitzontal i a l'esquerra el 4 en vertical. Omple el rectangle amb regletes per calcular 4 × 5!",
+      vFactor: 4,
+      hFactorRods: [5],
       targetValue: 20,
-      referenceRods: [10, 10],
-      constraints: { exactCount: 4, requiredRods: [5], sameColorOnly: true },
       hints: [
-        "La regleta del 5 és la groga.",
-        "Fes clic 4 vegades a la regleta Groga (5) per arribar a 20."
+        "Hi ha 4 files d'alçada i 5 d'amplada.",
+        "Col·loca 4 regletes Grogues (5) dins del rectangle per omplir-lo (4 × 5 = 20)."
       ],
-      explanation: "Genial! 4 × 5 = 20 (igual que 2 desenes)."
+      explanation: "Genial! L'àrea del rectangle és 4 × 5 = 20."
     },
     {
       id: "mul-1-3",
       level: 1,
-      title: "3 vegades 6 (3 × 6)",
-      instruction: "Representa 3 × 6 col·locant 3 regletes del número 6.",
+      title: "3 × 6 (Tècnica Italiana)",
+      instruction: "El factor vertical és 3 i el factor horitzontal és 6. Omple les 3 files del rectangle amb regletes per trobar el resultat de 3 × 6!",
+      vFactor: 3,
+      hFactorRods: [6],
       targetValue: 18,
-      referenceRods: [10, 8],
-      constraints: { exactCount: 3, requiredRods: [6], sameColorOnly: true },
       hints: [
-        "La regleta del 6 és la de color verd fosc.",
-        "Col·loca 3 regletes Verd fosc (6 + 6 + 6 = 18)."
+        "Cada fila té l'amplada de la regleta verd fosc (6).",
+        "Posa 3 regletes Verd fosc (6) dins del rectangle: 6 + 6 + 6 = 18."
       ],
       explanation: "Fantàstic! 3 × 6 = 18."
     },
@@ -516,88 +516,88 @@ const MODULE_EXERCISES = {
     {
       id: "mul-2-1",
       level: 2,
-      title: "4 vegades 6 (4 × 6)",
-      instruction: "Construeix la multiplicació 4 × 6 posant 4 regletes del número 6.",
+      title: "4 × 6 (Tècnica Italiana)",
+      instruction: "Omple el rectangle format pel factor vertical 4 i el factor horitzontal 6 amb regletes!",
+      vFactor: 4,
+      hFactorRods: [6],
       targetValue: 24,
-      referenceRods: [10, 10, 4],
-      constraints: { exactCount: 4, requiredRods: [6], sameColorOnly: true },
       hints: [
-        "Repeteix 4 vegades la regleta verd fosc (6).",
-        "6 + 6 + 6 + 6 = 24."
+        "El rectangle té 4 files i cada fila mesura 6.",
+        "Fes clic 4 vegades a la regleta Verd fosc (6) per omplir el rectangle (4 × 6 = 24)."
       ],
       explanation: "Molt bé! 4 × 6 = 24."
     },
     {
       id: "mul-2-2",
       level: 2,
-      title: "Propietat commutativa: 3 × 7 i 7 × 3",
-      instruction: "A dalt hi ha 3 regletes del 7 (3 × 7 = 21). Demostra que 7 × 3 dóna el mateix posant 7 regletes del 3!",
-      targetValue: 21,
-      referenceRods: [7, 7, 7],
-      constraints: { exactCount: 7, requiredRods: [3], sameColorOnly: true },
+      title: "5 × 7 (Tècnica Italiana)",
+      instruction: "A l'esquerra tenim el 5 en vertical i a dalt el 7 en horitzontal. Omple tot el rectangle amb regletes per calcular 5 × 7!",
+      vFactor: 5,
+      hFactorRods: [7],
+      targetValue: 35,
       hints: [
-        "7 × 3 vol dir repetir 7 vegades la regleta verd clar (3).",
-        "Fes clic 7 vegades a la regleta Verd clar (3)."
+        "Hi ha 5 files i cada fila té l'amplada de la regleta negra (7).",
+        "Col·loca 5 regletes Negres (7) per omplir tot el rectangle: 5 × 7 = 35."
       ],
-      explanation: "Perfecte! 3 × 7 = 7 × 3 = 21."
+      explanation: "Perfecte! 5 × 7 = 35."
     },
     {
       id: "mul-2-3",
       level: 2,
-      title: "4 vegades 8 (4 × 8)",
-      instruction: "Construeix 4 × 8 col·locant 4 regletes del número 8.",
+      title: "4 × 8 (Tècnica Italiana)",
+      instruction: "Omple el rectangle de 4 (vertical) per 8 (horitzontal) amb regletes per trobar el producte 4 × 8!",
+      vFactor: 4,
+      hFactorRods: [8],
       targetValue: 32,
-      referenceRods: [10, 10, 10, 2],
-      constraints: { exactCount: 4, requiredRods: [8], sameColorOnly: true },
       hints: [
-        "La regleta del 8 és la marró.",
-        "Posa 4 regletes Marrons (8 + 8 + 8 + 8 = 32)."
+        "Cada fila mesura 8 (regleta marró) i tenim 4 files.",
+        "Posa 4 regletes Marrons (8) per omplir les 4 files: 4 × 8 = 32."
       ],
       explanation: "Molt bé! 4 × 8 = 32."
     },
 
-    // ⭐⭐⭐ EXPERT
+    // ⭐⭐⭐ EXPERT (TÈCNICA ITALIANA AMB DOS FACTORS DESCOMPOSTOS A DALT)
     {
       id: "mul-3-1",
       level: 3,
-      title: "Multipliquem per dos dígits: 2 × 13",
-      instruction: "Per fer 2 × 13, descomponem el 13 en (10 + 3). Posa 2 regletes del 10 i 2 regletes del 3!",
+      title: "Tècnica Italiana: 2 × 13 (10 + 3)",
+      instruction: "A dalt tenim el 13 descompost en horitzontal (10 + 3) i a l'esquerra el 2 en vertical. Omple les 2 files del rectangle amb regletes del 10 i del 3!",
+      vFactor: 2,
+      hFactorRods: [10, 3],
       targetValue: 26,
-      referenceRods: [10, 10, 6],
-      constraints: { exactCount: 4, requiredRods: [10, 3] },
       hints: [
-        "2 vegades 13 és 2 vegades 10 (20) més 2 vegades 3 (6).",
-        "Posa dues regletes Taronges (10) i dues Verd clar (3). Total: 26!"
+        "A cada fila hi cap una regleta Taronja (10) i una Verd clar (3).",
+        "Omple les 2 files amb 10 + 3 a cadascuna: (2 × 10) + (2 × 3) = 20 + 6 = 26!"
       ],
-      explanation: "Molt bé! 2 × 13 = (2 × 10) + (2 × 3) = 20 + 6 = 26."
+      explanation: "Molt bé! Amb la tècnica italiana veiem que 2 × 13 = 20 + 6 = 26."
     },
     {
       id: "mul-3-2",
       level: 3,
-      title: "Propietat distributiva: 3 × 12",
-      instruction: "Calcula 3 × 12 posant 3 regletes del 10 i 3 regletes del 2.",
+      title: "Tècnica Italiana: 3 × 12 (10 + 2)",
+      instruction: "A dalt hi ha el 12 en horitzontal (10 + 2) i a l'esquerra el 3 en vertical. Omple les 3 files de la graella italiana amb regletes!",
+      vFactor: 3,
+      hFactorRods: [10, 2],
       targetValue: 36,
-      referenceRods: [10, 10, 10, 6],
-      constraints: { exactCount: 6, requiredRods: [10, 2] },
       hints: [
-        "12 és 10 + 2. Per tant, 3 × 12 = (3 × 10) + (3 × 2).",
-        "Col·loca 3 regletes Taronges (10) i 3 regletes Vermelles (2). Total: 36!"
+        "A cada fila posa-hi una regleta Taronja (10) i una Vermella (2).",
+        "Com que hi ha 3 files: (3 × 10) + (3 × 2) = 30 + 6 = 36!"
       ],
       explanation: "Excel·lent! 3 × 12 = 30 + 6 = 36."
     },
     {
       id: "mul-3-3",
       level: 3,
-      title: "Repte Expert: 3 × 11",
-      instruction: "Construeix 3 × 11 posant 3 vegades 10 i 3 vegades 1 (6 regletes en total).",
-      targetValue: 33,
-      referenceRods: [10, 10, 10, 3],
-      constraints: { exactCount: 6, requiredRods: [10, 1] },
+      title: "Tècnica Italiana: 4 × 14 (10 + 4)",
+      instruction: "A dalt tenim el 14 en horitzontal (10 + 4) i a l'esquerra el 4 en vertical. Omple les 4 files del rectangle amb regletes!",
+      vFactor: 4,
+      hFactorRods: [10, 4],
+      targetValue: 56,
       hints: [
-        "11 és 10 + 1.",
-        "Col·loca 3 regletes Taronges (10) i 3 regletes Blanques (1). Total: 33!"
+        "A cadascuna de les 4 files posa-hi una regleta del 10 i una del 4.",
+        "Primera caixa: 4 × 10 = 40. Segona caixa: 4 × 4 = 16. Total: 40 + 16 = 56!"
       ],
-      explanation: "Nivell Expert completat! 3 × 11 = 30 + 3 = 33."
+      explanation: "Nivell Expert completat! 4 × 14 = 40 + 16 = 56."
     }
   ]
 };
