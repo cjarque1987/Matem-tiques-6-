@@ -26,10 +26,17 @@
       </div>
 
       <div class="header-actions">
-        <div class="stars-pill" title="Estrelles aconseguides">
-          ⭐ <span id="earnedStarsBadge">0</span> estrelles
-          <span style="opacity:0.65; font-size:0.82rem;">(<span id="completedCountBadge">0</span> fets)</span>
+        <div class="lives-pill" id="livesPill" title="Tens 10 vides. Cada errada resta 1 vida!">
+          <span class="lives-hearts" id="livesHeartsDisplay">❤️❤️❤️❤️❤️❤️❤️❤️❤️❤️</span>
+          <span class="lives-text"><strong id="livesCountBadge">10</strong>/10 vides</span>
         </div>
+
+        <div class="stars-pill" id="starsPill" title="Estrelles i rang de gamificació">
+          ⭐ <span id="earnedStarsBadge">0</span> estrelles
+          <span class="rank-chip" id="playerRankBadge">🌱 Aprenent</span>
+          <span class="streak-chip" id="streakBadge" title="Ratxa d'encerts seguits (cada 3 encerts a la primera recuperes 1 vida!)">🔥 <span id="streakCountBadge">0</span></span>
+        </div>
+
         <button type="button" class="dua-pill-btn print-pill-btn" id="btnOpenPrintModal" title="Imprimir fitxa d'exercicis en paper o PDF">
           🖨️ Imprimir fitxa
         </button>
@@ -109,7 +116,8 @@
     <section class="challenge-card" id="challengeCard" aria-live="polite">
       <div class="challenge-header">
         <div class="challenge-title-wrap">
-          <span class="challenge-badge" id="challengeBadge">⭐ Principiant · 1/3</span>
+          <span class="challenge-badge" id="challengeBadge">⭐ Principiant · 1/5</span>
+          <span class="attempts-badge" id="attemptsBadge" title="Tens 2 oportunitats per resoldre cada exercici">🎯 Oportunitats: 2/2</span>
           <h2 class="challenge-title" id="challengeTitle">Títol del repte</h2>
         </div>
 
@@ -289,6 +297,26 @@
         <button type="button" class="tool-btn" id="btnCancelPrintModal">Cancel·la</button>
         <button type="button" class="tool-btn primary-cta" id="btnGenerateAndPrint">
           🖨️ Generar i Imprimir fitxa
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL QUAN L'ALUMNE ES QUEDA SENSE LES 10 VIDES -->
+  <div class="print-modal-backdrop" id="gameOverModal" aria-hidden="true">
+    <div class="print-modal-card gameover-card" role="dialog" aria-labelledby="gameOverTitle">
+      <div class="gameover-icon">💔</div>
+      <h2 id="gameOverTitle">T'has quedat sense vides!</h2>
+      <p class="print-modal-desc" id="gameOverMessage">
+        Has esgotat les teves 10 vides, però has fet una gran feina! Mira el teu marcador d'estrelles i torna-ho a intentar amb 10 vides noves.
+      </p>
+      <div class="gameover-stats-box">
+        <div>⭐ Estrelles aconseguides: <strong id="gameOverStarsCount">0</strong></div>
+        <div>🏅 Rang assolit: <strong id="gameOverRankName">🌱 Aprenent</strong></div>
+      </div>
+      <div class="print-modal-actions" style="justify-content: center;">
+        <button type="button" class="tool-btn primary-cta" id="btnRestoreLives">
+          ❤️ Recupera les 10 vides i continua!
         </button>
       </div>
     </div>

@@ -4,6 +4,9 @@
 // 2) Escriure el resultat exacte a la casella després de representar-ho
 // ============================================================================
 
+const MAX_LIVES = 10;
+const MAX_ATTEMPTS_PER_EXERCISE = 2;
+
 const state = {
   currentModule: "descomposicio", // descomposicio | sumes | restes | multiplicacions | problemes | laboratori
   selectedLevel: 1,               // 1 (⭐ Principiant) | 2 (⭐⭐ Mitjà) | 3 (⭐⭐⭐ Expert)
@@ -12,8 +15,31 @@ const state = {
   rowA: [],
   rowB: [],
   multRows: [],                   // Files del rectangle per a la multiplicació italiana
-  completedIds: JSON.parse(localStorage.getItem("cuisenaire_6e_completed_v2") || "[]")
+  completedIds: JSON.parse(localStorage.getItem("cuisenaire_6e_completed_v2") || "[]"),
+  failedIds: JSON.parse(localStorage.getItem("cuisenaire_6e_failed_v2") || "[]"),
+  attemptsByChallenge: JSON.parse(localStorage.getItem("cuisenaire_6e_attempts_v2") || "{}"),
+  lives: Number(localStorage.getItem("cuisenaire_6e_lives_v2") ?? MAX_LIVES),
+  streak: Number(localStorage.getItem("cuisenaire_6e_streak_v2") ?? 0)
 };
+if (isNaN(state.lives) || state.lives < 0 || state.lives > MAX_LIVES) {
+  state.lives = MAX_LIVES;
+}
+
+function saveGamificationState() {
+  localStorage.setItem("cuisenaire_6e_completed_v2", JSON.stringify(state.completedIds));
+  localStorage.setItem("cuisenaire_6e_failed_v2", JSON.stringify(state.failedIds));
+  localStorage.setItem("cuisenaire_6e_attempts_v2", JSON.stringify(state.attemptsByChallenge));
+  localStorage.setItem("cuisenaire_6e_lives_v2", String(state.lives));
+  localStorage.setItem("cuisenaire_6e_streak_v2", String(state.streak));
+}
+
+function getPlayerRank(totalStars) {
+  if (totalStars >= 90) return "🏆 Llegenda de 6è";
+  if (totalStars >= 50) return "👑 Gran Mestre";
+  if (totalStars >= 25) return "🛡️ Mestre";
+  if (totalStars >= 10) return "🧭 Explorador";
+  return "🌱 Aprenent";
+}
 
 function getRodMeta(val) {
   return CUISENAIRE_RODS.find(r => r.value === val) || CUISENAIRE_RODS[0];
@@ -165,6 +191,129 @@ function getExpectedExactResult(current) {
   return current.targetValue;
 }
 
+// Actualitza l'indicador de les 2 oportunitats de l'exercici actual
+function updateAttemptsUI(current) {
+  const attemptsBadge = document.getElementById("attemptsBadge");
+  const verifyBtn = document.getElementById("btnVerifyChallenge");
+  if (!attemptsBadge) return;
+
+  if (!current || state.currentModule === "laboratori") {
+    attemptsBadge.style.display = "none";
+    return;
+  }
+
+  attemptsBadge.style.display = "inline-flex";
+  const isCompleted = state.completedIds.includes(current.id);
+  const isFailed = state.failedIds.includes(current.id);
+  const attemptsUsed = state.attemptsByChallenge[current.id] || 0;
+  const remaining = Math.max(0, MAX_ATTEMPTS_PER_EXERCISE - attemptsUsed);
+
+  attemptsBadge.className = "attempts-badge";
+  if (isCompleted) {
+    attemptsBadge.textContent = "✅ Exercici superat!";
+    verifyBtn.disabled = false;
+    verifyBtn.style.opacity = "1";
+  } else if (isFailed || remaining === 0) {
+    attemptsBadge.classList.add("exhausted");
+    attemptsBadge.textContent = "❌ Oportunitats: 0/2 (Esgotades)";
+    verifyBtn.disabled = true;
+    verifyBtn.style.opacity = "0.55";
+  } else if (remaining === 1) {
+    attemptsBadge.classList.add("last-chance");
+    attemptsBadge.textContent = "⚠️ Última oportunitat: 1/2 (Meta activada!)";
+    verifyBtn.disabled = false;
+    verifyBtn.style.opacity = "1";
+  } else {
+    attemptsBadge.textContent = "🎯 Oportunitats: 2/2 (Sense Meta)";
+    verifyBtn.disabled = false;
+    verifyBtn.style.opacity = "1";
+  }
+}
+
+// Registra una errada: resta 1 oportunitat (màxim 2 per exercici) i resta 1 vida ❤️
+function registerFailedAttempt(current, reasonMessage) {
+  if (!current) return;
+
+  // Si ja estava superat, no penalitzem
+  if (state.completedIds.includes(current.id)) {
+    showFeedback(reasonMessage, "warning");
+    return;
+  }
+
+  const prevAttempts = state.attemptsByChallenge[current.id] || 0;
+  if (prevAttempts >= MAX_ATTEMPTS_PER_EXERCISE || state.failedIds.includes(current.id)) {
+    showFeedback(
+      `❌ Ja has esgotat les 2 oportunitats d'aquest exercici. Prem "Següent ➡️" per passar al següent repte!`,
+      "warning"
+    );
+    return;
+  }
+
+  const newAttempts = prevAttempts + 1;
+  state.attemptsByChallenge[current.id] = newAttempts;
+  state.streak = 0;
+
+  // Resta 1 vida per l'exercici fet malament
+  state.lives = Math.max(0, state.lives - 1);
+
+  if (newAttempts >= MAX_ATTEMPTS_PER_EXERCISE && !state.failedIds.includes(current.id)) {
+    state.failedIds.push(current.id);
+  }
+
+  saveGamificationState();
+
+  // Animació visual de pèrdua de vida
+  const livesPill = document.getElementById("livesPill");
+  if (livesPill) {
+    livesPill.classList.remove("lost-life-anim");
+    void livesPill.offsetWidth;
+    livesPill.classList.add("lost-life-anim");
+  }
+
+  updateAttemptsUI(current);
+  renderWorkspace();
+
+  if (newAttempts === 1) {
+    showFeedback(
+      `${reasonMessage} ⚠️ Has perdut 1 vida ❤️ (et queden ${state.lives}/10). Et queda 1 ÚLTIMA oportunitat! Ara hem activat la Meta al tauler per ajudar-te.`,
+      "warning"
+    );
+  } else {
+    showFeedback(
+      `❌ Has fallat la 2a oportunitat i has perdut 1 vida ❤️ (et queden ${state.lives}/10). Ja no queden més oportunitats en aquest exercici! (${current.explanation}) Prem "Següent ➡️".`,
+      "warning"
+    );
+  }
+
+  // Si s'ha quedat sense les 10 vides, mostrem el modal de final de vides
+  if (state.lives <= 0) {
+    setTimeout(() => {
+      openGameOverModal();
+    }, 500);
+  }
+}
+
+function openGameOverModal() {
+  const modal = document.getElementById("gameOverModal");
+  if (!modal) return;
+  const allItems = getAllChallenges();
+  const totalStars = allItems
+    .filter(item => state.completedIds.includes(item.id))
+    .reduce((acc, item) => acc + (item.level || 1), 0);
+
+  document.getElementById("gameOverStarsCount").textContent = totalStars;
+  document.getElementById("gameOverRankName").textContent = getPlayerRank(totalStars);
+  modal.classList.add("open");
+  modal.setAttribute("aria-hidden", "false");
+}
+
+function closeGameOverModal() {
+  const modal = document.getElementById("gameOverModal");
+  if (!modal) return;
+  modal.classList.remove("open");
+  modal.setAttribute("aria-hidden", "true");
+}
+
 // Carrega l'enunciat i les regletes inicials del repte
 function loadChallengeState() {
   hideFeedback();
@@ -195,6 +344,7 @@ function loadChallengeState() {
     matCanvas.style.display = "flex";
     italianContainer.style.display = "none";
     exactResultBox.style.display = "none";
+    updateAttemptsUI(null);
 
     document.getElementById("challengeBadge").textContent = "🧪 Tauler Lliure";
     document.getElementById("challengeTitle").textContent = "Practica i explora lliurement amb les regletes";
@@ -216,15 +366,19 @@ function loadChallengeState() {
   if (!current) return;
 
   const isCompleted = state.completedIds.includes(current.id);
+  const isFailed = state.failedIds.includes(current.id);
   const levelNames = {
     1: "⭐ Principiant",
     2: "⭐⭐ Mitjà",
     3: "⭐⭐⭐ Expert"
   };
 
+  const statusIcon = isCompleted ? "✅" : (isFailed ? "❌" : "");
   document.getElementById("challengeBadge").textContent =
-    `${levelNames[current.level]} · Repte ${state.activeChallengeIndex + 1} de ${list.length} ${isCompleted ? "✅" : ""}`;
+    `${levelNames[current.level]} · Repte ${state.activeChallengeIndex + 1} de ${list.length} ${statusIcon}`;
   document.getElementById("challengeTitle").textContent = current.title;
+
+  updateAttemptsUI(current);
 
   // Configurem la casella de resultat exacte per a les operacions (Sumes, Restes, Multiplicacions)
   if (state.currentModule === "sumes") {
@@ -276,6 +430,13 @@ function loadChallengeState() {
     document.getElementById("challengeInstruction").textContent = current.instruction + extraPrompt;
     state.rowA = [...(current.referenceRods || [])];
     state.rowB = [...(current.initialRowB || [])];
+  }
+
+  if (isFailed && !isCompleted) {
+    showFeedback(
+      `❌ Aquest exercici ja ha esgotat les 2 oportunitats. Prem "Següent ➡️" per continuar o reinicia les vides al menú DUA.`,
+      "warning"
+    );
   }
 
   renderWorkspace();
@@ -418,17 +579,29 @@ function renderItalianMultiplicationBoard(current) {
 }
 
 function renderWorkspace() {
+  const currentChallenge = getCurrentChallenge();
+  const isSolved = currentChallenge && state.completedIds.includes(currentChallenge.id);
+  const attemptsUsed = currentChallenge ? (state.attemptsByChallenge[currentChallenge.id] || 0) : 0;
+
   if (state.currentModule === "multiplicacions") {
-    const current = getCurrentChallenge();
-    if (current) renderItalianMultiplicationBoard(current);
+    if (currentChallenge) renderItalianMultiplicationBoard(currentChallenge);
     updateProgressBadges();
     return;
   }
 
+  const wrapperRowA = document.getElementById("wrapperRowA");
   const trackA = document.getElementById("trackRowA");
   const trackB = document.getElementById("trackRowB");
   trackA.innerHTML = "";
   trackB.innerHTML = "";
+
+  // En Descomposició, el 1r cop que ho intenten (attemptsUsed === 0 i no superat) ocultem el model de mostra
+  // perquè tampoc vegin la llargada de la meta fins al 2n intent!
+  if (state.currentModule === "descomposicio") {
+    wrapperRowA.style.display = (attemptsUsed >= 1 || isSolved) ? "flex" : "none";
+  } else if (state.currentModule === "sumes" || state.currentModule === "restes") {
+    wrapperRowA.style.display = "flex";
+  }
 
   // Fila A (Model)
   state.rowA.forEach(val => {
@@ -449,11 +622,9 @@ function renderWorkspace() {
     });
   }
 
-  // Bandera d'objectiu visual
-  const currentChallenge = getCurrentChallenge();
-  const isSolved = currentChallenge && state.completedIds.includes(currentChallenge.id);
-
-  if (currentChallenge && state.currentModule !== "laboratori") {
+  // Bandera d'objectiu visual (Meta): NO apareix la primera vegada que ho intenten (attemptsUsed === 0)!
+  // Només apareix a partir del 2n intent (attemptsUsed >= 1) com a ajuda visual, o quan ja està superat.
+  if (currentChallenge && state.currentModule !== "laboratori" && (attemptsUsed >= 1 || isSolved)) {
     const targetUnits = state.currentModule === "problemes"
       ? currentChallenge.targetRodUnits
       : currentChallenge.targetValue;
@@ -504,9 +675,24 @@ function renderWorkspace() {
 }
 
 // Comprovació: 1r) Representació amb regletes i 2n) Resultat exacte escrit pel nen
+// L'alumne només té 2 oportunitats per exercici i perd 1 vida per cada exercici fet malament!
 function verifyCurrentChallenge() {
   const current = getCurrentChallenge();
   if (!current) return;
+
+  if (state.lives <= 0) {
+    openGameOverModal();
+    return;
+  }
+
+  const attemptsUsed = state.attemptsByChallenge[current.id] || 0;
+  if (!state.completedIds.includes(current.id) && (state.failedIds.includes(current.id) || attemptsUsed >= MAX_ATTEMPTS_PER_EXERCISE)) {
+    showFeedback(
+      `❌ Ja has utilitzat les 2 oportunitats d'aquest exercici! Prem "Següent ➡️" per passar al següent repte.`,
+      "warning"
+    );
+    return;
+  }
 
   const starsStr = "⭐".repeat(current.level || 1);
 
@@ -523,10 +709,15 @@ function verifyCurrentChallenge() {
       row => row.reduce((a, b) => a + b, 0) === hTotal
     );
 
+    if (totalFilled === 0) {
+      showFeedback(`📏 Posa primer les regletes dins del rectangle abans de comprovar!`, "warning");
+      return;
+    }
+
     if (!allRowsFull || totalFilled !== current.targetValue) {
-      showFeedback(
-        `📏 Primer acaba d'omplir totes les files del rectangle amb les regletes!`,
-        "warning"
+      registerFailedAttempt(
+        current,
+        `📏 Encara no has omplert totes les files del rectangle correctament.`
       );
       return;
     }
@@ -544,15 +735,16 @@ function verifyCurrentChallenge() {
 
     if (writtenVal !== current.targetValue) {
       inputEl.focus();
-      showFeedback(
-        `📏 El rectangle de regletes està molt bé, però el resultat escrit (${writtenVal}) no és exacte. Compta bé quant sumen les regletes del rectangle!`,
-        "warning"
+      registerFailedAttempt(
+        current,
+        `📏 El rectangle de regletes està bé, però el resultat escrit (${writtenVal}) és incorrecte.`
       );
       return;
     }
 
-    markCompleted(current.id);
-    showFeedback(`🌟 Fantàstic! Has representat la multiplicació i has escrit el resultat exacte (${current.targetValue}). Has guanyat ${starsStr}!`, "success");
+    const bonusMsg = markCompleted(current.id);
+    showFeedback(`🌟 Fantàstic! Has representat la multiplicació i has escrit el resultat exacte (${current.targetValue}). Has guanyat ${starsStr}! ${bonusMsg}`, "success");
+    updateAttemptsUI(current);
     renderWorkspace();
     return;
   }
@@ -565,10 +757,15 @@ function verifyCurrentChallenge() {
     const numericVal = parseInt(inputEl.value, 10);
     const sumB = state.rowB.reduce((a, b) => a + b, 0);
 
+    if (state.rowB.length === 0 && isNaN(numericVal)) {
+      showFeedback(`📏 Representa primer el problema amb les regletes al tauler i escriu la resposta!`, "warning");
+      return;
+    }
+
     if (sumB !== current.targetRodUnits) {
-      showFeedback(
-        `📏 Primer representa el resultat del problema posant les regletes al tauler! (Pots prémer "🪄 Ajuda'm amb les regletes" o "💡 Necessito una pista").`,
-        "warning"
+      registerFailedAttempt(
+        current,
+        `📏 Les regletes posades al tauler no representen el resultat correcte del problema.`
       );
       return;
     }
@@ -584,15 +781,16 @@ function verifyCurrentChallenge() {
 
     if (numericVal !== current.expectedAnswer) {
       inputEl.focus();
-      showFeedback(
-        `📏 Les regletes del tauler són correctes, però el número escrit (${numericVal}) no coincideix. Compta el valor de les teves regletes!`,
-        "warning"
+      registerFailedAttempt(
+        current,
+        `📏 Les regletes del tauler són correctes, però el número escrit (${numericVal}) no coincideix.`
       );
       return;
     }
 
-    markCompleted(current.id);
-    showFeedback(`🎉 Molt bé! Has guanyat ${starsStr}! Resposta exacta: ${current.expectedAnswer} ${current.unit}. ${current.explanation}`, "success");
+    const bonusMsg = markCompleted(current.id);
+    showFeedback(`🎉 Molt bé! Has guanyat ${starsStr}! Resposta exacta: ${current.expectedAnswer} ${current.unit}. ${current.explanation} ${bonusMsg}`, "success");
+    updateAttemptsUI(current);
     renderWorkspace();
     return;
   }
@@ -600,47 +798,70 @@ function verifyCurrentChallenge() {
   // ==========================================================================
   // 3) DESCOMPOSICIÓ, SUMES I RESTES
   // ==========================================================================
+  const initialCount = (current.initialRowB || []).length;
+  if (state.rowB.length <= initialCount) {
+    showFeedback(`📏 Posa primer les regletes al teu tren abans de comprovar!`, "warning");
+    return;
+  }
+
   const sumB = state.rowB.reduce((a, b) => a + b, 0);
   const target = current.targetValue;
 
   if (sumB !== target) {
-    if (sumB < target) {
-      showFeedback(`📏 El teu tren de regletes encara és massa curt! Afegeix les regletes que falten per igualar el model.`, "warning");
-    } else {
-      showFeedback(`📏 T'has passat de llargada amb les regletes! Fes clic en una peça per treure-la.`, "warning");
-    }
+    const msg = sumB < target
+      ? `📏 El teu tren de regletes és massa curt!`
+      : `📏 T'has passat de llargada amb les regletes!`;
+    registerFailedAttempt(current, msg);
     return;
   }
 
   const c = current.constraints || {};
   if (c.exactCount && state.rowB.length !== c.exactCount) {
-    showFeedback(`La llargada és correcta, però ho has de fer amb exactament ${c.exactCount} regletes (ara en tens ${state.rowB.length}).`, "warning");
+    registerFailedAttempt(
+      current,
+      `La llargada és correcta, però ho has de fer amb exactament ${c.exactCount} regletes (en tens ${state.rowB.length}).`
+    );
     return;
   }
   if (c.minTotalRods && state.rowB.length < c.minTotalRods) {
-    showFeedback(`La llargada és correcta, però has de posar com a mínim ${c.minTotalRods} regletes.`, "warning");
+    registerFailedAttempt(
+      current,
+      `La llargada és correcta, però has de posar com a mínim ${c.minTotalRods} regletes.`
+    );
     return;
   }
   if (c.forbiddenRods && c.forbiddenRods.some(f => state.rowB.includes(f))) {
-    showFeedback(`En aquest repte no es pot fer servir la regleta del ${c.forbiddenRods.join(", ")}. Prova-ho amb altres regletes!`, "warning");
+    registerFailedAttempt(
+      current,
+      `En aquest repte no es pot fer servir la regleta del ${c.forbiddenRods.join(", ")}.`
+    );
     return;
   }
   if (c.maxCountOf10) {
     const tensCount = state.rowB.filter(r => r === 10).length;
     if (tensCount > c.maxCountOf10) {
-      showFeedback(`Només pots posar ${c.maxCountOf10} regleta del 10 en aquest repte!`, "warning");
+      registerFailedAttempt(
+        current,
+        `Només pots posar ${c.maxCountOf10} regleta del 10 en aquest repte!`
+      );
       return;
     }
   }
   if (c.sameColorOnly) {
     const first = state.rowB[0];
     if (!state.rowB.every(r => r === first)) {
-      showFeedback(`Totes les regletes del teu tren han de ser del MATEIX color!`, "warning");
+      registerFailedAttempt(
+        current,
+        `Totes les regletes del teu tren han de ser del MATEIX color!`
+      );
       return;
     }
   }
   if (c.requiredRods && !c.requiredRods.every(req => state.rowB.includes(req))) {
-    showFeedback(`Recorda utilitzar les regletes del ${c.requiredRods.join(" i ")} com demana l'enunciat.`, "warning");
+    registerFailedAttempt(
+      current,
+      `Recorda utilitzar les regletes del ${c.requiredRods.join(" i ")} com demana l'enunciat.`
+    );
     return;
   }
 
@@ -661,23 +882,17 @@ function verifyCurrentChallenge() {
 
     if (writtenVal !== expectedExact) {
       inputEl.focus();
-      if (state.currentModule === "restes") {
-        showFeedback(
-          `📏 Les regletes estan molt bé, però el resultat de la resta (${current.minuend} - ${current.subtrahend}) és el valor de les regletes que has afegit! Revisa el número escrit.`,
-          "warning"
-        );
-      } else {
-        showFeedback(
-          `📏 Les regletes estan molt bé, però el número escrit (${writtenVal}) no és exacte. Suma el valor de les teves regletes!`,
-          "warning"
-        );
-      }
+      const errMsg = state.currentModule === "restes"
+        ? `📏 Les regletes estan molt bé, però el resultat de la resta (${current.minuend} - ${current.subtrahend}) és el valor de les regletes que has afegit!`
+        : `📏 Les regletes estan molt bé, però el número escrit (${writtenVal}) no és exacte.`;
+      registerFailedAttempt(current, errMsg);
       return;
     }
   }
 
-  markCompleted(current.id);
-  showFeedback(`🌟 Fantàstic! Has guanyat ${starsStr}! ${current.explanation}`, "success");
+  const bonusMsg = markCompleted(current.id);
+  showFeedback(`🌟 Fantàstic! Has guanyat ${starsStr}! ${current.explanation} ${bonusMsg}`, "success");
+  updateAttemptsUI(current);
   renderWorkspace();
 }
 
@@ -704,22 +919,57 @@ function getAllChallenges() {
 }
 
 function markCompleted(id) {
-  if (!id) return;
-  if (!state.completedIds.includes(id)) {
+  if (!id) return "";
+  let bonusLifeMsg = "";
+  const wasAlreadyCompleted = state.completedIds.includes(id);
+
+  if (!wasAlreadyCompleted) {
     state.completedIds.push(id);
-    localStorage.setItem("cuisenaire_6e_completed_v2", JSON.stringify(state.completedIds));
+    // Elimina de fallats si hi era
+    state.failedIds = state.failedIds.filter(f => f !== id);
+
+    // Si ho ha encertat a la primera oportunitat (0 errors previs), puja la ratxa!
+    const prevErrors = state.attemptsByChallenge[id] || 0;
+    if (prevErrors === 0) {
+      state.streak = (state.streak || 0) + 1;
+      if (state.streak % 3 === 0 && state.lives < MAX_LIVES) {
+        state.lives = Math.min(MAX_LIVES, state.lives + 1);
+        bonusLifeMsg = "🔥 Ratxa de 3 a la primera! Recuperes +1 ❤️ vida!";
+      } else {
+        bonusLifeMsg = `🔥 Ratxa: ${state.streak}!`;
+      }
+    }
+    saveGamificationState();
   }
   updateProgressBadges();
+  return bonusLifeMsg;
 }
 
 function updateProgressBadges() {
-  document.getElementById("completedCountBadge").textContent = state.completedIds.length;
-
   const allItems = getAllChallenges();
   const totalStars = allItems
     .filter(item => state.completedIds.includes(item.id))
     .reduce((acc, item) => acc + (item.level || 1), 0);
-  document.getElementById("earnedStarsBadge").textContent = totalStars;
+
+  const earnedStarsEl = document.getElementById("earnedStarsBadge");
+  if (earnedStarsEl) earnedStarsEl.textContent = totalStars;
+
+  const rankEl = document.getElementById("playerRankBadge");
+  if (rankEl) rankEl.textContent = getPlayerRank(totalStars);
+
+  const streakEl = document.getElementById("streakCountBadge");
+  if (streakEl) streakEl.textContent = state.streak || 0;
+
+  // Actualitzem les 10 vides i els cors
+  const livesCountEl = document.getElementById("livesCountBadge");
+  if (livesCountEl) livesCountEl.textContent = state.lives;
+
+  const heartsEl = document.getElementById("livesHeartsDisplay");
+  if (heartsEl) {
+    const fullHearts = "❤️".repeat(Math.max(0, state.lives));
+    const emptyHearts = "🖤".repeat(Math.max(0, MAX_LIVES - state.lives));
+    heartsEl.textContent = fullHearts + emptyHearts;
+  }
 
   ["descomposicio", "sumes", "restes", "multiplicacions"].forEach(mod => {
     const total = MODULE_EXERCISES[mod].length;
@@ -770,10 +1020,30 @@ document.addEventListener("DOMContentLoaded", () => {
 
   document.getElementById("btnResetProgress").addEventListener("click", () => {
     state.completedIds = [];
-    localStorage.removeItem("cuisenaire_6e_completed_v2");
+    state.failedIds = [];
+    state.attemptsByChallenge = {};
+    state.lives = MAX_LIVES;
+    state.streak = 0;
+    saveGamificationState();
     updateProgressBadges();
     loadChallengeState();
   });
+
+  // Botó per recuperar les 10 vides quan s'esgoten
+  const btnRestoreLives = document.getElementById("btnRestoreLives");
+  if (btnRestoreLives) {
+    btnRestoreLives.addEventListener("click", () => {
+      state.lives = MAX_LIVES;
+      state.failedIds = [];
+      state.attemptsByChallenge = {};
+      state.streak = 0;
+      saveGamificationState();
+      closeGameOverModal();
+      updateProgressBadges();
+      loadChallengeState();
+      showFeedback("❤️ Has recuperat les 10 vides i tens noves oportunitats! Endavant!", "success");
+    });
+  }
 
   // Pestanyes de temes
   document.querySelectorAll("#moduleTabs .nav-tab").forEach(tab => {

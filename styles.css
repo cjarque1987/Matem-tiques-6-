@@ -146,19 +146,146 @@ button, input {
   flex-wrap: wrap;
 }
 
+.lives-pill {
+  background: #FEE2E2;
+  color: #991B1B;
+  border: 2px solid #EF4444;
+  padding: 0.42rem 0.9rem;
+  border-radius: 99px;
+  font-weight: 800;
+  font-size: 0.92rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  transition: transform 0.2s, background-color 0.2s;
+}
+
+.lives-pill.lost-life-anim {
+  animation: pulseLostLife 0.55s ease;
+}
+
+@keyframes pulseLostLife {
+  0%, 100% { transform: scale(1); }
+  25% { transform: scale(1.1) translateX(-4px); background: #FCA5A5; }
+  50% { transform: scale(1.1) translateX(4px); }
+  75% { transform: scale(1.05); }
+}
+
+.lives-hearts {
+  font-size: 0.85rem;
+  letter-spacing: 1px;
+}
+
+body.theme-dark .lives-pill {
+  background: #7F1D1D;
+  color: #FECACA;
+  border-color: #F87171;
+}
+
 .stars-pill {
   background: #FEF3C7;
   color: #92400E;
   border: 2px solid #F59E0B;
-  padding: 0.45rem 0.95rem;
+  padding: 0.42rem 0.95rem;
   border-radius: 99px;
   font-weight: 800;
   font-size: 0.95rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.rank-chip {
+  background: #FDE68A;
+  color: #78350F;
+  padding: 2px 8px;
+  border-radius: 99px;
+  font-size: 0.82rem;
+  border: 1px solid #F59E0B;
+}
+
+.streak-chip {
+  background: #FFEDD5;
+  color: #C2410C;
+  padding: 2px 7px;
+  border-radius: 99px;
+  font-size: 0.82rem;
+  border: 1px solid #FB923C;
 }
 
 body.theme-dark .stars-pill {
   background: #78350F;
   color: #FDE68A;
+}
+
+body.theme-dark .rank-chip {
+  background: #451A03;
+  color: #FDE68A;
+}
+
+body.theme-dark .streak-chip {
+  background: #431407;
+  color: #FDBA74;
+}
+
+.attempts-badge {
+  background: #DCFCE7;
+  color: #166534;
+  border: 2px solid #22C55E;
+  font-weight: 800;
+  font-size: 0.86rem;
+  padding: 0.25rem 0.75rem;
+  border-radius: 99px;
+}
+
+.attempts-badge.last-chance {
+  background: #FEF3C7;
+  color: #92400E;
+  border-color: #F59E0B;
+}
+
+.attempts-badge.exhausted {
+  background: #FEE2E2;
+  color: #991B1B;
+  border-color: #EF4444;
+}
+
+body.theme-dark .attempts-badge {
+  background: #064E3B;
+  color: #A7F3D0;
+}
+
+body.theme-dark .attempts-badge.last-chance {
+  background: #78350F;
+  color: #FDE68A;
+}
+
+body.theme-dark .attempts-badge.exhausted {
+  background: #7F1D1D;
+  color: #FECACA;
+}
+
+.gameover-card {
+  text-align: center;
+  align-items: center;
+}
+
+.gameover-icon {
+  font-size: 3.2rem;
+  line-height: 1;
+}
+
+.gameover-stats-box {
+  width: 100%;
+  background: var(--bg-subtle);
+  border: 2px solid var(--border-color);
+  border-radius: 12px;
+  padding: 0.85rem 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  font-size: 1.05rem;
 }
 
 .dua-pill-btn {
