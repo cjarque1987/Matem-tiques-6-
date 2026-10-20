@@ -30,6 +30,9 @@
           ⭐ <span id="earnedStarsBadge">0</span> estrelles
           <span style="opacity:0.65; font-size:0.82rem;">(<span id="completedCountBadge">0</span> fets)</span>
         </div>
+        <button type="button" class="dua-pill-btn print-pill-btn" id="btnOpenPrintModal" title="Imprimir fitxa d'exercicis en paper o PDF">
+          🖨️ Imprimir fitxa
+        </button>
         <button type="button" class="dua-pill-btn" id="btnToggleDuaPanel" aria-expanded="false">
           ♿ Lletra i Vista (DUA)
         </button>
@@ -246,6 +249,53 @@
     </div>
 
   </main>
+
+  <!-- MODAL PER CONFIGURAR I IMPRIMIR LA FITXA EN PAPER / PDF -->
+  <div class="print-modal-backdrop" id="printModal" aria-hidden="true">
+    <div class="print-modal-card" role="dialog" aria-labelledby="printModalTitle">
+      <div class="print-modal-header">
+        <h2 id="printModalTitle">🖨️ Imprimir fitxa en paper (o desar en PDF)</h2>
+        <button type="button" class="print-modal-close" id="btnClosePrintModal" aria-label="Tanca">✖</button>
+      </div>
+      <p class="print-modal-desc">
+        Tria quins exercicis vols incloure a la fitxa imprimible. S'inclouran els models de regletes, l'espai quadriculat per dibuixar-les i la casella per escriure el resultat exacte.
+      </p>
+
+      <div class="print-form-group">
+        <label for="printModuleSelect">📚 Apartat d'exercicis:</label>
+        <select id="printModuleSelect" class="print-select">
+          <option value="current">Apartat actual que tinc obert</option>
+          <option value="descomposicio">🧩 Només Descomposició (5 per nivell)</option>
+          <option value="sumes">➕ Només Sumes (5 per nivell)</option>
+          <option value="restes">➖ Només Restes (5 per nivell)</option>
+          <option value="multiplicacions">✖️ Només Multiplicacions · Tècnica Italiana (5 per nivell)</option>
+          <option value="problemes">📖 Només Problemes (5 per nivell)</option>
+          <option value="all">🌟 Tots els apartats complets</option>
+        </select>
+      </div>
+
+      <div class="print-form-group">
+        <label for="printLevelSelect">⭐ Nivell de dificultat:</label>
+        <select id="printLevelSelect" class="print-select">
+          <option value="current">Nivell actual seleccionat</option>
+          <option value="1">⭐ Principiant (1 estrella)</option>
+          <option value="2">⭐⭐ Mitjà (2 estrelles)</option>
+          <option value="3">⭐⭐⭐ Expert (3 estrelles)</option>
+          <option value="all">Tots els 3 nivells (⭐ + ⭐⭐ + ⭐⭐⭐)</option>
+        </select>
+      </div>
+
+      <div class="print-modal-actions">
+        <button type="button" class="tool-btn" id="btnCancelPrintModal">Cancel·la</button>
+        <button type="button" class="tool-btn primary-cta" id="btnGenerateAndPrint">
+          🖨️ Generar i Imprimir fitxa
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- CONTENIDOR D'IMPRESSIÓ (NOMÉS VISIBLE EN IMPRIMIR / DESAR EN PDF) -->
+  <section id="printWorksheetContainer" class="print-worksheet-container" aria-hidden="true"></section>
 
   <footer class="footer-bar">
     Recurs educatiu per a <strong>6è de Primària</strong> · Regletes de Cuisenaire i DUA · Català

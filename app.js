@@ -878,5 +878,220 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   });
 
+  // ==========================================================================
+  // MODAL I GENERADOR DE FITXES IMPRIMIBLES EN PAPER / PDF
+  // ==========================================================================
+  const printModal = document.getElementById("printModal");
+  const btnOpenPrint = document.getElementById("btnOpenPrintModal");
+  const btnClosePrint = document.getElementById("btnClosePrintModal");
+  const btnCancelPrint = document.getElementById("btnCancelPrintModal");
+  const btnGenerateAndPrint = document.getElementById("btnGenerateAndPrint");
+
+  function openPrintModal() {
+    printModal.classList.add("open");
+    printModal.setAttribute("aria-hidden", "false");
+  }
+
+  function closePrintModal() {
+    printModal.classList.remove("open");
+    printModal.setAttribute("aria-hidden", "true");
+  }
+
+  btnOpenPrint.addEventListener("click", openPrintModal);
+  btnClosePrint.addEventListener("click", closePrintModal);
+  btnCancelPrint.addEventListener("click", closePrintModal);
+  printModal.addEventListener("click", (e) => {
+    if (e.target === printModal) closePrintModal();
+  });
+
+  btnGenerateAndPrint.addEventListener("click", () => {
+    const modChoice = document.getElementById("printModuleSelect").value;
+    const lvlChoice = document.getElementById("printLevelSelect").value;
+    buildPrintableWorksheet(modChoice, lvlChoice);
+    closePrintModal();
+    setTimeout(() => {
+      window.print();
+    }, 120);
+  });
+
   loadChallengeState();
 });
+
+// Construeix l'HTML de la fitxa per imprimir segons l'apartat i nivell triats
+function buildPrintableWorksheet(modChoice, lvlChoice) {
+  const container = document.getElementById("printWorksheetContainer");
+  const PRINT_UNIT_PX = 18;
+
+  const moduleTitles = {
+    descomposicio: "🧩 1. Descomposició de nombres amb Regletes",
+    sumes: "➕ 2. Sumes amb Regletes i Resultat Exacte",
+    restes: "➖ 3. Restes amb Regletes (Quina regleta falta?) i Resultat Exacte",
+    multiplicacions: "✖️ 4. Multiplicacions · Tècnica Italiana i Resultat Exacte",
+    problemes: "📖 5. Problemes de Matemàtiques amb Regletes"
+  };
+
+  const levelLabels = {
+    1: "⭐ Nivell Principiant (1 estrella)",
+    2: "⭐⭐ Nivell Mitjà (2 estrelles)",
+    3: "⭐⭐⭐ Nivell Expert (3 estrelles)"
+  };
+
+  // Quins apartats incloem
+  let targetModules = [];
+  if (modChoice === "all") {
+    targetModules = ["descomposicio", "sumes", "restes", "multiplicacions", "problemes"];
+  } else if (modChoice === "current") {
+    const activeMod = state.currentModule === "laboratori" ? "descomposicio" : state.currentModule;
+    targetModules = [activeMod];
+  } else {
+    targetModules = [modChoice];
+  }
+
+  // Quins nivells incloem
+  let targetLevels = [];
+  if (lvlChoice === "all") {
+    targetLevels = [1, 2, 3];
+  } else if (lvlChoice === "current") {
+    targetLevels = [Number(state.selectedLevel) || 1];
+  } else {
+    targetLevels = [Number(lvlChoice)];
+  }
+
+  // Llegenda de colors de les Regletes de Cuisenaire
+  const legendHtml = CUISENAIRE_RODS.map(r => `
+    <span class="print-legend-chip">
+      <span class="print-legend-swatch" style="background:${r.color}; border-color:${r.border};"></span>
+      ${r.value} = ${r.name}
+    </span>
+  `).join("");
+
+  let html = `
+    <header class="print-sheet-header">
+      <div class="print-sheet-title-row">
+        <h1>📏 Fitxa de Matemàtiques · Regletes de Cuisenaire (6è de Primària)</h1>
+        <span style="font-weight:800; font-size:9.5pt;">Disseny Universal (DUA)</span>
+      </div>
+      <div class="print-student-fields">
+        <span>Nom i cognoms: _____________________________________________</span>
+        <span>Data: ____ / ____ / 202__</span>
+        <span>Curs: 6è ____</span>
+      </div>
+      <div class="print-legend-bar">
+        <strong>🎨 Codi de Regletes:</strong> ${legendHtml}
+      </div>
+    </header>
+  `;
+
+  function renderPrintRodHtml(val) {
+    const meta = getRodMeta(val);
+    return `<span class="print-rod" style="width:${val * PRINT_UNIT_PX}px; background:${meta.color}; border-color:${meta.border}; color:${meta.text};">${val}</span>`;
+  }
+
+  function renderPrintVerticalRodHtml(val) {
+    const meta = getRodMeta(val);
+    return `<span class="print-rod-vertical" style="height:${val * 22}px; background:${meta.color}; border-color:${meta.border}; color:${meta.text};">${val}</span>`;
+  }
+
+  targetModules.forEach(modKey => {
+    const sourceList = modKey === "problemes"
+      ? WORD_PROBLEMS
+      : (MODULE_EXERCISES[modKey] || []);
+
+    targetLevels.forEach(lvl => {
+      const items = sourceList.filter(item => item.level === lvl);
+      if (!items.length) return;
+
+      html += `<h2 class="print-section-heading">${moduleTitles[modKey]} — ${levelLabels[lvl]}</h2>`;
+
+      items.forEach((ex, idx) => {
+        if (modKey === "multiplicacions") {
+          const hTotal = ex.hFactorRods.reduce((a, b) => a + b, 0);
+          const topRodsMarkup = ex.hFactorRods.map(v => renderPrintRodHtml(v)).join("");
+          const leftRodMarkup = renderPrintVerticalRodHtml(ex.vFactor);
+
+          html += `
+            <article class="print-exercise-card">
+              <div class="print-ex-top">
+                <div>
+                  <div class="print-ex-title">${idx + 1}. ${ex.title}</div>
+                  <div class="print-ex-instruction">${ex.instruction} Després, escriu el resultat exacte.</div>
+                </div>
+                <div class="print-result-box">
+                  ✍️ Resultat (${ex.vFactor} × ${hTotal}) = <span class="print-blank-input"></span>
+                </div>
+              </div>
+              <div class="print-italian-wrap">
+                <div class="print-italian-corner">✖️</div>
+                <div class="print-italian-top">${topRodsMarkup}</div>
+                <div class="print-italian-left">${leftRodMarkup}</div>
+                <div class="print-italian-interior" style="width:${hTotal * PRINT_UNIT_PX}px; height:${ex.vFactor * 22}px;"></div>
+              </div>
+            </article>
+          `;
+        } else if (modKey === "problemes") {
+          const gridWidthUnits = Math.min(Math.max(ex.targetRodUnits || 20, 16), 34);
+          html += `
+            <article class="print-exercise-card">
+              <div class="print-ex-top">
+                <div>
+                  <div class="print-ex-title">${idx + 1}. ${ex.contextIcon} ${ex.title}</div>
+                  <div class="print-ex-instruction">${ex.statement}</div>
+                </div>
+                <div class="print-result-box">
+                  ✍️ ${ex.question} <span class="print-blank-input"></span> ${ex.unit || ""}
+                </div>
+              </div>
+              <div class="print-workspace-area">
+                <div class="print-track-row">
+                  <span class="print-track-label">🛠️ Regletes:</span>
+                  <div class="print-student-grid-track" style="width:${gridWidthUnits * PRINT_UNIT_PX}px;"></div>
+                </div>
+              </div>
+            </article>
+          `;
+        } else {
+          // Descomposició, Sumes o Restes
+          const refRodsMarkup = (ex.referenceRods || []).map(v => renderPrintRodHtml(v)).join("");
+          const initialBRodsMarkup = (ex.initialRowB || []).map(v => renderPrintRodHtml(v)).join("");
+          const targetUnits = ex.targetValue || 15;
+
+          let resultBoxMarkup = "";
+          if (modKey === "sumes") {
+            const sumExpr = (ex.referenceRods || []).join(" + ");
+            resultBoxMarkup = `<div class="print-result-box">✍️ Resultat (${sumExpr}) = <span class="print-blank-input"></span></div>`;
+          } else if (modKey === "restes") {
+            resultBoxMarkup = `<div class="print-result-box">✍️ Resultat (${ex.minuend} - ${ex.subtrahend}) = <span class="print-blank-input"></span></div>`;
+          } else {
+            resultBoxMarkup = `<div class="print-result-box">🎯 Objectiu: <strong>${ex.targetValue}</strong></div>`;
+          }
+
+          html += `
+            <article class="print-exercise-card">
+              <div class="print-ex-top">
+                <div>
+                  <div class="print-ex-title">${idx + 1}. ${ex.title}</div>
+                  <div class="print-ex-instruction">${ex.instruction}</div>
+                </div>
+                ${resultBoxMarkup}
+              </div>
+              <div class="print-workspace-area">
+                <div class="print-track-row">
+                  <span class="print-track-label">📌 Model:</span>
+                  <div class="print-rod-strip">${refRodsMarkup}</div>
+                </div>
+                <div class="print-track-row">
+                  <span class="print-track-label">🛠️ El teu tren:</span>
+                  <div class="print-student-grid-track" style="width:${targetUnits * PRINT_UNIT_PX}px;">
+                    ${initialBRodsMarkup}
+                  </div>
+                </div>
+              </div>
+            </article>
+          `;
+        }
+      });
+    });
+  });
+
+  container.innerHTML = html;
+}
